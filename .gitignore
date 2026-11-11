@@ -1,0 +1,25 @@
+# Byte-compiled / optimized / binary caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.dylib
+*.dll
+
+# Matplotlib & Julia cache
+.matplotlib/
+.julia/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Large raw datasets and serialized pickle caches (NASA .mat, CALCE .xlsx/zips, parsed_cycles.pkl)
+data/raw/
+*.pkl
+
+# Scratch and temporary testing files
+scratch/
+test_*.pdf
+test_*.png
+~$*
+*.tmp

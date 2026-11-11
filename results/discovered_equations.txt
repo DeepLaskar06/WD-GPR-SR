@@ -1,0 +1,101 @@
+==========================================================================================
+ Discovered Closed-Form Residual Equations via Uncertainty-Weighted SR
+ Author: Moonis Laskar (Roll No: 2401CS29) | Project: WD-GPR-SR
+==========================================================================================
+
+Dataset: NASA | Cell: B0005 | Seed: 42
+  Performance: RMSE = 0.4246%, R² = 0.9980
+  Equation   : -0.014
+
+Dataset: NASA | Cell: B0005 | Seed: 100
+  Performance: RMSE = 0.4295%, R² = 0.9980
+  Equation   : sub(X4, X4)
+
+Dataset: NASA | Cell: B0005 | Seed: 2026
+  Performance: RMSE = 0.7155%, R² = 0.9943
+  Equation   : mul(sub(X7, X7), div(X0, X2))
+
+Dataset: NASA | Cell: B0006 | Seed: 42
+  Performance: RMSE = 1.5789%, R² = 0.9842
+  Equation   : -0.014
+
+Dataset: NASA | Cell: B0006 | Seed: 100
+  Performance: RMSE = 1.6266%, R² = 0.9832
+  Equation   : sub(X4, X4)
+
+Dataset: NASA | Cell: B0006 | Seed: 2026
+  Performance: RMSE = 1.3258%, R² = 0.9889
+  Equation   : mul(sub(X7, X7), div(X0, X2))
+
+Dataset: NASA | Cell: B0007 | Seed: 42
+  Performance: RMSE = 1.1252%, R² = 0.9803
+  Equation   : -0.014
+
+Dataset: NASA | Cell: B0007 | Seed: 100
+  Performance: RMSE = 0.5258%, R² = 0.9957
+  Equation   : sub(X0, X0)
+
+Dataset: NASA | Cell: B0007 | Seed: 2026
+  Performance: RMSE = 1.0120%, R² = 0.9841
+  Equation   : mul(div(X3, X8), sub(X5, X5))
+
+Dataset: NASA | Cell: B0018 | Seed: 42
+  Performance: RMSE = 0.9769%, R² = 0.9840
+  Equation   : -0.014
+
+Dataset: NASA | Cell: B0018 | Seed: 100
+  Performance: RMSE = 1.0212%, R² = 0.9825
+  Equation   : 0.025
+
+Dataset: NASA | Cell: B0018 | Seed: 2026
+  Performance: RMSE = 1.1449%, R² = 0.9780
+  Equation   : 0.045
+
+Dataset: CALCE | Cell: CS2_35 | Seed: 42
+  Performance: RMSE = 0.0676%, R² = 1.0000
+  Equation   : X4
+
+Dataset: CALCE | Cell: CS2_35 | Seed: 100
+  Performance: RMSE = 0.0765%, R² = 1.0000
+  Equation   : X4
+
+Dataset: CALCE | Cell: CS2_35 | Seed: 2026
+  Performance: RMSE = 0.0624%, R² = 1.0000
+  Equation   : X3
+
+Dataset: CALCE | Cell: CS2_36 | Seed: 42
+  Performance: RMSE = 0.0228%, R² = 1.0000
+  Equation   : X4
+
+Dataset: CALCE | Cell: CS2_36 | Seed: 100
+  Performance: RMSE = 0.0786%, R² = 1.0000
+  Equation   : X4
+
+Dataset: CALCE | Cell: CS2_36 | Seed: 2026
+  Performance: RMSE = 0.1135%, R² = 1.0000
+  Equation   : X3
+
+Dataset: CALCE | Cell: CS2_37 | Seed: 42
+  Performance: RMSE = 0.0670%, R² = 1.0000
+  Equation   : X4
+
+Dataset: CALCE | Cell: CS2_37 | Seed: 100
+  Performance: RMSE = 0.0231%, R² = 1.0000
+  Equation   : X4
+
+Dataset: CALCE | Cell: CS2_37 | Seed: 2026
+  Performance: RMSE = 0.0531%, R² = 1.0000
+  Equation   : X3
+
+Dataset: CALCE | Cell: CS2_38 | Seed: 42
+  Performance: RMSE = 0.2914%, R² = 0.9997
+  Equation   : X4
+
+Dataset: CALCE | Cell: CS2_38 | Seed: 100
+  Performance: RMSE = 0.3196%, R² = 0.9996
+  Equation   : X4
+
+Dataset: CALCE | Cell: CS2_38 | Seed: 2026
+  Performance: RMSE = 0.3822%, R² = 0.9994
+  Equation   : X3
+
