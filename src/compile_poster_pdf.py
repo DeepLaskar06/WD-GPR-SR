@@ -211,7 +211,7 @@ def build_poster():
     c.setFont(FONT_REGULAR, 9.5)
     c.setFillColor(COLOR_TEXT)
     c.drawString(margin_x + 0.3 * inch, footer_y + 0.12 * inch,
-                 "Project Repository: github.com/moonislaskar/WD-GPR-SR  |  Deterministic Pipeline: PyTorch 2.5, GPyTorch, TensorRT FP16, PySR")
+                 "Project Repository: https://github.com/DeepLaskar06/WD-GPR-SR  |  Deterministic Pipeline: PyTorch 2.5, GPyTorch, TensorRT FP16, PySR")
 
     c.setFont(FONT_BOLD, 10)
     c.setFillColor(COLOR_SUCCESS)
