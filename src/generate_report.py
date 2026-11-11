@@ -3,13 +3,24 @@ Academic Project Report Generator (2401CS29_MLProject.pdf).
 Author: Moonis Laskar (Roll No: 2401CS29)
 Project: WD-GPR-SR: When Uncertainty Meets Equations in Battery Health Prediction
 Strict Guideline: Exactly 8-Page Comprehensive Academic Research Report
+Includes TrueType Font Embedding & Proper Mathematical Typography (No Raw LaTeX Strings)
 """
 
 import sys
 import os
+import shutil
 from pathlib import Path
 import pandas as pd
 import numpy as np
+
+# Base directory & Matplotlib config BEFORE any matplotlib import
+BASE_DIR = Path(__file__).resolve().parent.parent
+os.environ["MPLCONFIGDIR"] = str((BASE_DIR / ".matplotlib").resolve())
+
+import matplotlib
+matplotlib.rcParams['pdf.fonttype'] = 42
+matplotlib.rcParams['ps.fonttype'] = 42
+import matplotlib.pyplot as plt
 
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
@@ -18,6 +29,187 @@ from reportlab.platypus import (
 )
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.pdfgen import canvas
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+
+# =====================================================================
+# TrueType Font Registration for Proper Unicode Math & Acrobat Compatibility
+# =====================================================================
+FONT_REGULAR = "Helvetica"
+FONT_BOLD = "Helvetica-Bold"
+FONT_ITALIC = "Helvetica-Oblique"
+
+ttf_candidates = [
+    ("SegoeUI", "C:/Windows/Fonts/segoeui.ttf", "SegoeUI-Bold", "C:/Windows/Fonts/segoeuib.ttf", "SegoeUI-Italic", "C:/Windows/Fonts/segoeuii.ttf"),
+    ("Arial", "C:/Windows/Fonts/arial.ttf", "Arial-Bold", "C:/Windows/Fonts/arialbd.ttf", "Arial-Italic", "C:/Windows/Fonts/ariali.ttf"),
+]
+
+for reg_name, reg_path, bold_name, bold_path, ital_name, ital_path in ttf_candidates:
+    if os.path.exists(reg_path) and os.path.exists(bold_path):
+        try:
+            pdfmetrics.registerFont(TTFont(reg_name, reg_path))
+            pdfmetrics.registerFont(TTFont(bold_name, bold_path))
+            if os.path.exists(ital_path):
+                pdfmetrics.registerFont(TTFont(ital_name, ital_path))
+                FONT_ITALIC = ital_name
+            FONT_REGULAR = reg_name
+            FONT_BOLD = bold_name
+            print(f"[OK] Registered TrueType fonts: {FONT_REGULAR}, {FONT_BOLD}, {FONT_ITALIC}")
+            break
+        except Exception as e:
+            print(f"[WARN] Font registration note: {e}")
+
+# =====================================================================
+# Equation Image Panels (Rendered via Matplotlib with Type 42 Fonts)
+# =====================================================================
+EQ_DIR = BASE_DIR / "results" / "report_assets"
+EQ_DIR.mkdir(parents=True, exist_ok=True)
+
+def ensure_equation_images():
+    """Generates crisp 300 DPI formula panels for Section 4 display equations."""
+    eqs = [
+        (
+            r"$\mathbf{K}_{\mathrm{total}}(\mathbf{x}, \mathbf{x}^\prime) = K_{\mathrm{wide}}(\mathbf{x}, \mathbf{x}^\prime) + K_{\mathrm{deep}}(\mathbf{x}, \mathbf{x}^\prime) + K_{\mathrm{stab}}(\mathbf{x}, \mathbf{x}^\prime)$",
+            "report_eq_1_composite.png", (7.0, 0.42), 10.5
+        ),
+        (
+            r"$K_{\mathrm{wide}}(\mathbf{x}, \mathbf{x}^\prime) = \sigma_{\mathrm{wide}}^2 \sum_{j=1}^{10} v_j x_j x_j^\prime, \quad v_j \geq 0$",
+            "report_eq_2_wide.png", (6.5, 0.42), 10.5
+        ),
+        (
+            r"$K_{\mathrm{deep}}(\mathbf{x}, \mathbf{x}^\prime) = \sigma_{\mathrm{deep}}^2 \left(1 + \sqrt{5} d_\phi + \frac{5}{3} d_\phi^2\right) e^{-\sqrt{5} d_\phi}, \quad d_\phi = \sqrt{\sum_{k=1}^8 \frac{(\phi_k(\mathbf{x}) - \phi_k(\mathbf{x}^\prime))^2}{\ell_k^2}}$",
+            "report_eq_3_deep.png", (8.2, 0.52), 10.0
+        ),
+        (
+            r"$\mathcal{L}_{\mathrm{ELBO}}(\boldsymbol{\theta}) = \sum_{i=1}^N \mathrm{E}_{q(f_i)}\left[\log p(y_i \mid f_i)\right] - D_{\mathrm{KL}}\left(q(\mathbf{u}) \parallel p(\mathbf{u})\right), \quad M=64$",
+            "report_eq_4_elbo.png", (7.8, 0.46), 10.0
+        ),
+        (
+            r"$\mathcal{L}_{\mathrm{SR}}(\hat{g}) = \frac{\sum_{i=1}^N w_i \cdot (r_i - \hat{g}(\mathbf{x}_i))^2}{\sum_{i=1}^N w_i}, \quad w_i = \frac{1}{\sigma_{\mathrm{GPR}}^2(\mathbf{x}_i) + \epsilon}, \quad \epsilon = 10^{-6}$",
+            "report_eq_5_sr.png", (8.0, 0.50), 10.0
+        ),
+        (
+            r"$\hat{y}(\mathbf{x}^*) = \mu_{\mathrm{GPR}}(\mathbf{x}^*) + \mathrm{clip}\left(\hat{g}(\mathbf{x}^*),\, \pm 3\sigma_{\mathrm{GPR}}(\mathbf{x}^*)\right), \quad \sigma_{\mathrm{total}}^2(\mathbf{x}^*) = \sigma_{\mathrm{GPR}}^2(\mathbf{x}^*)$",
+            "report_eq_6_bound.png", (8.0, 0.46), 10.0
+        )
+    ]
+    for latex_str, fname, figsize, fontsize in eqs:
+        out_path = EQ_DIR / fname
+        if not out_path.exists():
+            fig, ax = plt.subplots(figsize=figsize, dpi=300)
+            fig.patch.set_facecolor("#F8FAFC")
+            ax.set_facecolor("#F8FAFC")
+            ax.axis("off")
+            ax.text(0.5, 0.5, latex_str, ha="center", va="center", fontsize=fontsize, color="#0A2540",
+                    transform=ax.transAxes)
+            plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
+            plt.savefig(out_path, dpi=300, facecolor="#F8FAFC", bbox_inches="tight")
+            plt.close()
+
+ensure_equation_images()
+
+# =====================================================================
+# Math Translation Dictionary: Maps Raw LaTeX to XML/HTML Math Typography
+# =====================================================================
+MATH_MAP = {
+    # 1. Health Indicators and physical variables
+    r"$t_{\text{CC}}$": "<i>t</i><sub>CC</sub>",
+    r"$t_{\text{CV}}$": "<i>t</i><sub>CV</sub>",
+    r"$t_{\text{plateau}}$": "<i>t</i><sub>plateau</sub>",
+    r"$\Delta T_{\text{dis}}$": "Δ<i>T</i><sub>dis</sub>",
+    r"$\bar{T}_{\text{dis}}$": "<i>T̄</i><sub>dis</sub>",
+    r"$\bar{V}_{\text{dis}}$": "<i>V̄</i><sub>dis</sub>",
+    r"$E_{\text{dis}}$": "<i>E</i><sub>dis</sub>",
+    r"$E_{\text{dis}} = \int V(t) I(t) dt$": "<i>E</i><sub>dis</sub> = ∫ <i>V</i>(<i>t</i>)<i>I</i>(<i>t</i>)d<i>t</i>",
+    r"$dQ/dV|_{\max}$": "(d<i>Q</i>/d<i>V</i>)<sub>max</sub>",
+    r"$dQ/dV$": "d<i>Q</i>/d<i>V</i>",
+    r"$V_{\text{peak}}$": "<i>V</i><sub>peak</sub>",
+    r"$A_{\text{peak}}$": "<i>A</i><sub>peak</sub>",
+    r"$\text{SOH} = C_k / C_0$": "SOH = <i>C<sub>k</sub></i> / <i>C</i><sub>0</sub>",
+    r"$(t_{\text{dis}}, V_{\text{dis}})$": "(<i>t</i><sub>dis</sub>, <i>V</i><sub>dis</sub>)",
+    r"$\max(T_{\text{dis}}) - T_{\text{dis}}[0]$": "max(<i>T</i><sub>dis</sub>) − <i>T</i><sub>dis</sub>[0]",
+    r"$I^2 R_{\text{int}}$": "<i>I</i>²<i>R</i><sub>int</sub>",
+    r"$V(t)$": "<i>V</i>(<i>t</i>)",
+    r"$I(t)$": "<i>I</i>(<i>t</i>)",
+    r"$T(t)$": "<i>T</i>(<i>t</i>)",
+    r"$\text{LiCoO}_2$": "LiCoO<sub>2</sub>",
+    r"$24^\circ\text{C}$": "24°C",
+    r"$2.0\text{ Ah}$": "2.0 Ah",
+    r"$1.1\text{ Ah}$": "1.1 Ah",
+    
+    # 2. Operational limits & complexity
+    r"$\le 100\text{ ms}$": "≤ 100 ms",
+    r"$\le 15\text{W}$": "≤ 15 W",
+    r"$\mathcal{O}(NM^2 + M^3)$": "<i>O</i>(<i>NM</i>² + <i>M</i>³)",
+    r"$\mathcal{O}(N^3)$": "<i>O</i>(<i>N</i>³)",
+    r"$\mathcal{O}(N^2)$": "<i>O</i>(<i>N</i>²)",
+    r"$M=64$": "<i>M</i> = 64",
+    r"$k$-fold": "<i>k</i>-fold",
+    r"$k$-means": "<i>k</i>-means",
+    r"$r = 0.98$": "<i>r</i> = 0.98",
+    r"$r = 0.96$": "<i>r</i> = 0.96",
+    
+    # 3. Kernel & GP notation
+    r"$K_{\text{wide}}$": "<i>K</i><sub>wide</sub>",
+    r"$K_{\text{deep}}$": "<i>K</i><sub>deep</sub>",
+    r"$K_{\text{stab}}$": "<i>K</i><sub>stab</sub>",
+    r"$K_{\text{total}}(\mathbf{x}, \mathbf{x}')$": "<b>K</b><sub>total</sub>(<b>x</b>, <b>x</b>′)",
+    r"$v_j \ge 0$": "<i>v<sub>j</sub></i> ≥ 0",
+    r"$v_1 = 1.42$": "<i>v</i>₁ = 1.42",
+    r"$v_3 = 0.78$": "<i>v</i>₃ = 0.78",
+    r"$v_8 = 0.95$": "<i>v</i>₈ = 0.95",
+    r"$j$": "<i>j</i>",
+    r"$k$": "<i>k</i>",
+    r"$\phi(\mathbf{x}) \in \mathbb{R}^8$": "ϕ(<b>x</b>) ∈ ℝ⁸",
+    r"$\phi(\mathbf{x})$": "ϕ(<b>x</b>)",
+    r"$\phi(\mathbf{x}): \mathbb{R}^{10} \to \mathbb{R}^8$": "ϕ(<b>x</b>): ℝ¹⁰ → ℝ⁸",
+    r"$\boldsymbol{\ell} = [\ell_1, \dots, \ell_8]^T$": "<b>ℓ</b> = [ℓ₁, …, ℓ₈]ᵀ",
+    r"$\sigma_{\text{stab}}^2 \le 0.05$": "σ<sub>stab</sub>² ≤ 0.05",
+    r"$\mathbf{x}$": "<b>x</b>",
+    r"$\mathbf{x}^*$": "<b>x</b>*",
+    r"$\mathbf{Z}$": "<b>Z</b>",
+    r"$\mathbf{Z} = [\mathbf{z}_1, \dots, \mathbf{z}_M]^T \in \mathbb{R}^{64 \times 10}$": "<b>Z</b> = [<b>z</b>₁, …, <b>z</b><i><sub>M</sub></i>]ᵀ ∈ ℝ⁶⁴ˣ¹⁰",
+    r"$\mathbf{u} = f(\mathbf{Z})$": "<b>u</b> = <i>f</i>(<b>Z</b>)",
+    r"$q(\mathbf{u}) = \mathcal{N}(\mathbf{m}, \mathbf{S})$": "<i>q</i>(<b>u</b>) = 𝒩(<b>m</b>, <b>S</b>)",
+    r"$\mathbf{m}, \mathbf{S}$": "<b>m</b>, <b>S</b>",
+    r"$\sigma_{\text{noise}}^2$": "σ<sub>noise</sub>²",
+    r"$\mathcal{L}_{\text{ELBO}}(\boldsymbol{\theta})$": "ℒ<sub>ELBO</sub>(<b>θ</b>)",
+    r"$D_{\text{KL}}$": "<i>D</i><sub>KL</sub>",
+    r"$p(\mathbf{u}) = \mathcal{N}(\mathbf{0}, \mathbf{K}_{\mathbf{ZZ}})$": "<i>p</i>(<b>u</b>) = 𝒩(<b>0</b>, <b>K</b><sub>ZZ</sub>)",
+    
+    # 4. Symbolic regression & residual bounds
+    r"$r_i = y_i - \mu_{\text{GPR}}(\mathbf{x}_i)$": "<i>r<sub>i</sub></i> = <i>y<sub>i</sub></i> − μ<sub>GPR</sub>(<b>x</b><i><sub>i</sub></i>)",
+    r"$r_i = y_i - \mu_i$": "<i>r<sub>i</sub></i> = <i>y<sub>i</sub></i> − μ<i><sub>i</sub></i>",
+    r"$\hat{g}(\mathbf{x})$": "<i>ĝ</i>(<b>x</b>)",
+    r"$\sigma_{\text{GPR}}^2(\mathbf{x}_i)$": "σ<sub>GPR</sub>²(<b>x</b><i><sub>i</sub></i>)",
+    r"$\mathcal{L}_{\text{SR}}$": "ℒ<sub>SR</sub>",
+    r"$w_i = 1/\sigma_i^2$": "<i>w<sub>i</sub></i> = 1/σ<i><sub>i</sub></i>²",
+    r"$w_i = 1 / (\sigma_i^2 + 10^{-6})$": "<i>w<sub>i</sub></i> = 1 / (σ<i><sub>i</sub></i>² + 10⁻⁶)",
+    r"$\epsilon = 10^{-6}$": "ε = 10⁻⁶",
+    r"$\hat{y}(\mathbf{x}^*)$": "<i>ŷ</i>(<b>x</b>*)",
+    r"$\sigma^2(\mathbf{x}^*)$": "σ²(<b>x</b>*)",
+    r"$\sigma^2(\mathbf{x}^*) = \sigma_{\text{GPR}}^2(\mathbf{x}^*)$": "σ²(<b>x</b>*) = σ<sub>GPR</sub>²(<b>x</b>*)",
+    r"$\Delta_{\max} = 3\sigma_{\text{GPR}}(\mathbf{x}^*)$": "Δ<sub>max</sub> = 3σ<sub>GPR</sub>(<b>x</b>*)",
+    r"$\hat{y}(\mathbf{x}^*) = \mu_{\text{GPR}}(\mathbf{x}^*) + \text{clip}(\hat{g}(\mathbf{x}^*), -3\sigma_{\text{GPR}}, 3\sigma_{\text{GPR}})$": "<i>ŷ</i>(<b>x</b>*) = μ<sub>GPR</sub>(<b>x</b>*) + clip(<i>ĝ</i>(<b>x</b>*), −3σ<sub>GPR</sub>, 3σ<sub>GPR</sub>)",
+    r"$\mathcal{D}_{\text{train}} = \{(\mathbf{x}_i, y_i)\}_{i=1}^N$": "𝒟<sub>train</sub> = {(<b>x</b><i><sub>i</sub></i>, <i>y<sub>i</sub></i>)}",
+    r"$\mathcal{D}_{\text{val}}$": "𝒟<sub>val</sub>",
+    r"$\mathbf{X}_{\text{train}}$": "<b>X</b><sub>train</sub>",
+    r"$\mathbf{X}_{\text{val}}$": "<b>X</b><sub>val</sub>",
+    r"$\mathbf{X}_{\text{test}}$": "<b>X</b><sub>test</sub>",
+    r"$\mathcal{B} \subset \mathcal{D}_{\text{train}}$": "ℬ ⊂ 𝒟<sub>train</sub>",
+    r"$(\sigma_{\text{wide}}, \sigma_{\text{deep}}, \sigma_{\text{stab}}, \mathbf{v}, \boldsymbol{\ell})$": "(σ<sub>wide</sub>, σ<sub>deep</sub>, σ<sub>stab</sub>, <b>v</b>, <b>ℓ</b>)",
+    r"$\mu_i, \sigma_i^2 = \text{WD-SparseGPR}(\mathbf{x}_i)$": "μ<i><sub>i</sub></i>, σ<i><sub>i</sub></i>² = WD-SparseGPR(<b>x</b><i><sub>i</sub></i>)",
+    r"$|\partial \hat{y} / \partial x_j|$": "|∂<i>ŷ</i> / ∂<i>x<sub>j</sub></i>|",
+    r"$= 1$": "= 1",
+    r"10 \to 32 \to 16 \to 8": "10 → 32 → 16 → 8",
+}
+
+def fmt(text: str) -> str:
+    """Replaces raw LaTeX strings with cleanly rendered XML/HTML typography."""
+    for k in sorted(MATH_MAP.keys(), key=len, reverse=True):
+        text = text.replace(k, MATH_MAP[k])
+    return text
+
 
 # =====================================================================
 # Numbered Canvas for Running Headers and Footers
@@ -41,7 +233,7 @@ class NumberedCanvas(canvas.Canvas):
 
     def draw_page_decorations(self, total_pages):
         self.saveState()
-        self.setFont("Helvetica", 8)
+        self.setFont(FONT_REGULAR, 8)
         self.setFillColor(colors.HexColor("#4A5568"))
 
         # Running Header (pages > 1)
@@ -73,13 +265,29 @@ class PageMarker(Flowable):
         print(f"  [PAGE {self.canv._pageNumber}] {self.name}")
 
 
+def get_writable_target_path(filename: str = "2401CS29_MLProject.pdf") -> Path:
+    """Checks if the primary target PDF is locked by Adobe Acrobat on Windows."""
+    target = BASE_DIR / filename
+    if not target.exists():
+        return target
+    try:
+        with open(target, "a"):
+            pass
+        return target
+    except (PermissionError, OSError):
+        alt = BASE_DIR / "2401CS29_MLProject_fixed.pdf"
+        print(f"[NOTE] '{target.name}' is currently open and locked by Adobe Acrobat on Windows.")
+        print(f"[NOTE] Compiling updated report to temporary file: '{alt.name}'")
+        return alt
+
+
 # =====================================================================
 # Main Report Generation Script
 # =====================================================================
 def build_report():
-    pdf_filename = "2401CS29_MLProject.pdf"
+    target_path = get_writable_target_path("2401CS29_MLProject.pdf")
     doc = SimpleDocTemplate(
-        pdf_filename,
+        str(target_path),
         pagesize=letter,
         leftMargin=36,
         rightMargin=36,
@@ -93,7 +301,7 @@ def build_report():
     title_style = ParagraphStyle(
         "DocTitle",
         parent=base_styles["Title"],
-        fontName="Helvetica-Bold",
+        fontName=FONT_BOLD,
         fontSize=16.5,
         leading=20,
         textColor=colors.HexColor("#1A365D"),
@@ -104,7 +312,7 @@ def build_report():
     subtitle_style = ParagraphStyle(
         "DocSubtitle",
         parent=base_styles["Normal"],
-        fontName="Helvetica",
+        fontName=FONT_REGULAR,
         fontSize=9.5,
         leading=13,
         textColor=colors.HexColor("#2B547E"),
@@ -115,7 +323,7 @@ def build_report():
     author_style = ParagraphStyle(
         "DocAuthor",
         parent=base_styles["Normal"],
-        fontName="Helvetica-Bold",
+        fontName=FONT_BOLD,
         fontSize=8.5,
         leading=11.5,
         textColor=colors.HexColor("#2D3748"),
@@ -125,7 +333,7 @@ def build_report():
 
     sec_heading = ParagraphStyle(
         "SecHeading",
-        fontName="Helvetica-Bold",
+        fontName=FONT_BOLD,
         fontSize=11.5,
         leading=14.5,
         textColor=colors.HexColor("#1A365D"),
@@ -136,7 +344,7 @@ def build_report():
 
     subsec_heading = ParagraphStyle(
         "SubSecHeading",
-        fontName="Helvetica-Bold",
+        fontName=FONT_BOLD,
         fontSize=9.0,
         leading=11.5,
         textColor=colors.HexColor("#2B547E"),
@@ -147,7 +355,7 @@ def build_report():
 
     body_style = ParagraphStyle(
         "BodyDark",
-        fontName="Helvetica",
+        fontName=FONT_REGULAR,
         fontSize=8.2,
         leading=10.8,
         textColor=colors.HexColor("#2D3748"),
@@ -157,7 +365,7 @@ def build_report():
 
     callout_style = ParagraphStyle(
         "Callout",
-        fontName="Helvetica",
+        fontName=FONT_REGULAR,
         fontSize=7.8,
         leading=10.2,
         textColor=colors.HexColor("#1A202C")
@@ -165,7 +373,7 @@ def build_report():
 
     table_cell = ParagraphStyle(
         "TableCell",
-        fontName="Helvetica",
+        fontName=FONT_REGULAR,
         fontSize=6.8,
         leading=8.4,
         textColor=colors.HexColor("#2D3748")
@@ -173,7 +381,7 @@ def build_report():
 
     table_cell_bold = ParagraphStyle(
         "TableCellBold",
-        fontName="Helvetica-Bold",
+        fontName=FONT_BOLD,
         fontSize=6.8,
         leading=8.4,
         textColor=colors.HexColor("#1A365D")
@@ -181,7 +389,7 @@ def build_report():
 
     table_cell_header = ParagraphStyle(
         "TableCellHeader",
-        fontName="Helvetica-Bold",
+        fontName=FONT_BOLD,
         fontSize=7.0,
         leading=8.6,
         textColor=colors.white,
@@ -190,7 +398,7 @@ def build_report():
 
     caption_style = ParagraphStyle(
         "Caption",
-        fontName="Helvetica-Oblique",
+        fontName=FONT_ITALIC,
         fontSize=7.2,
         leading=9.0,
         textColor=colors.HexColor("#4A5568"),
@@ -217,7 +425,7 @@ def build_report():
     story.append(Paragraph("<b>Author:</b> Moonis Laskar &nbsp;|&nbsp; <b>Roll No:</b> 2401CS29 &nbsp;|&nbsp; <b>Degree:</b> B.Tech in Computer Science & Engineering<br/><b>Institution:</b> Indian Institute of Technology Patna &nbsp;|&nbsp; <b>Date:</b> November 2026", author_style))
     story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#1A365D"), spaceAfter=5))
 
-    abstract_text = (
+    abstract_text = fmt(
         "<b>Abstract—</b> Accurate State-of-Health (SOH) and Remaining Useful Life (RUL) estimation for lithium-ion batteries is critical for electric vehicle reliability and safety-critical aerospace energy storage. Contemporary data-driven methodologies face an acute trade-off: high-capacity deep neural networks behave as uninterpretable black boxes devoid of calibrated uncertainty, while exact Gaussian Process Regression (GPR) scales cubically with sample size and fails under cross-cell distribution shifts. In this paper, we propose <b>WD-GPR-SR</b>, a hybrid architecture combining a three-branch additive <b>Wide-and-Deep Sparse Gaussian Process</b> with <b>Uncertainty-Weighted Symbolic Regression (SR)</b>. The Wide linear branch captures global irreversible degradation trends, a Deep Matérn-5/2 branch extracts complex non-linear knee-point representations, and a stabilizer kernel guarantees strict positive-definiteness. Inducing-point variational inference ($M=64$) reduces complexity to $\\mathcal{O}(NM^2 + M^3)$. Systematic GPR residuals are subsequently distilled via Pareto-optimal genetic programming into closed-form analytical equations down-weighted by posterior predictive uncertainty. Evaluated across 312 runs under strict Leave-One-Cell-Out (LOCO) cross-validation on NASA and CALCE benchmarks with three random seeds ([42, 100, 2026]), WD-GPR-SR achieves state-of-the-art accuracy with <b>0.992% RMSE</b> on NASA and <b>0.130% RMSE</b> on CALCE, alongside well-calibrated <b>98.8% PICP-95 coverage</b>. Furthermore, deployment optimization for the <b>NVIDIA Jetson Orin Nano</b> via TensorRT FP16 and static matrix linearization demonstrates microsecond latency (<b>0.110 ms</b> median) and ultra-low energy (<b>1.48 mJ</b> per inference), validating real-time Battery Management System (BMS) feasibility."
     )
     abs_table = Table([[Paragraph(abstract_text, callout_style)]], colWidths=[540])
@@ -234,12 +442,12 @@ def build_report():
 
     # 1. INTRODUCTION
     story.append(Paragraph("1. Introduction", sec_heading))
-    intro_p1 = (
+    intro_p1 = fmt(
         "Lithium-ion batteries are the dominant energy storage technology across modern electric mobility, consumer devices, and aerospace platforms. However, operational degradation—governed by solid electrolyte interphase (SEI) growth, lithium plating, transition metal dissolution, and loss of cyclable active material—induces irreversible capacity fade and internal impedance rise. Tracking State-of-Health ($\\text{SOH} = C_k / C_0$) in real time is mandatory to prevent sudden catastrophic failures, schedule cell balancing, and optimize power delivery. Standard automotive control bus standards (**ISO 26262 ASIL-D / SAE J1939 CAN 2.0B**) enforce strict real-time deadlines of $\\le 100\\text{ ms}$ per telemetry cycle under tight embedded power envelopes ($\\le 15\\text{W}$ TDP)."
     )
     story.append(Paragraph(intro_p1, body_style))
 
-    intro_p2 = (
+    intro_p2 = fmt(
         "Despite extensive research, existing prognostic methods suffer from fundamental trade-offs: empirical Equivalent Circuit Models (ECMs) require extensive manual tuning and cannot predict non-linear degradation knee points. Deep neural networks (MLPs, BiLSTMs, Transformers) deliver empirical capacity but operate as opaque black boxes, providing overconfident uncalibrated predictions under unseen distribution shifts. Exact Gaussian Processes offer Bayesian uncertainty bounds but scale as $\\mathcal{O}(N^3)$, causing computational bottlenecks and lengthscale collapse under cross-cell testing. To overcome these limitations, this project makes four primary contributions: "
         "<br/><b>1. Wide-and-Deep Covariance Formulation:</b> An additive kernel fusing an Automatic Relevance Determination (ARD) linear wide branch with a deep MLP-projected Matérn-5/2 kernel and an RBF stabilizer, simultaneously learning monotonic capacity decline and localized knee-point bifurcations."
         "<br/><b>2. Uncertainty-Weighted Symbolic Distillation:</b> Leveraging Pareto-optimal genetic programming to discover transparent mathematical equations for GPR residuals, down-weighting uncertain regions ($w_i = 1/\\sigma_i^2$) to eliminate noise overfitting."
@@ -255,14 +463,13 @@ def build_report():
         "Battery prognostic approaches broadly fall into three paradigms: physics-based electrochemical models, empirical equivalent circuit models, and data-driven machine learning. Physics-based electrochemical models (e.g., Newman's P2D model) solve coupled non-linear partial differential equations of lithium diffusion; while accurate, their computational burden prevents real-time embedded BMS execution. Equivalent Circuit Models (ECMs) approximate cell dynamics via resistor-capacitor networks but fail under dynamic aging regimes. Consequently, data-driven machine learning has emerged as the dominant research trajectory."
     )
     story.append(Paragraph(lit_p1, body_style))
-
     story.append(PageBreak())
 
     # =========================================================================
     # PAGE 2: LIT REVIEW PART 2 & 3. DATASET AND PREPROCESSING
     # =========================================================================
     story.append(PageMarker("PAGE 2: Lit Review Part 2 & Dataset Description"))
-    lit_p2 = (
+    lit_p2 = fmt(
         "Within machine learning, classical algorithms (Support Vector Regression, Random Forests, XGBoost) model tabular cycle features effectively but produce deterministic point estimates devoid of uncertainty quantification. Deep neural networks (BiLSTMs, Temporal Convolutional Networks) capture sequential temporal dependencies but overfit on small battery datasets and lack physical interpretability. Exact GPR provides Bayesian confidence intervals, yet its cubic complexity $\\mathcal{O}(N^3)$ and memory footprint $\\mathcal{O}(N^2)$ preclude deployment on edge microcontrollers. Deep Kernel Learning (DKL) combines neural feature extractors with GPR, but standard implementations suffer from kernel pathology, representation collapse, and catastrophic loss of interpretability. Furthermore, existing symbolic regression applications fit raw capacity directly, yielding unstable high-degree polynomials that fail to generalize across distinct cell chemistries. In contrast, WD-GPR-SR decouples global degradation modeling into a calibrated sparse GP prior while delegating only confident stationary residuals to symbolic optimization, establishing a resilient and interpretable paradigm."
     )
     story.append(Paragraph(lit_p2, body_style))
@@ -270,7 +477,7 @@ def build_report():
 
     # 3. DATASET AND PREPROCESSING
     story.append(Paragraph("3. Dataset and Preprocessing", sec_heading))
-    data_p1 = (
+    data_p1 = fmt(
         "Empirical validation is conducted on two distinct, publicly accessible battery degradation benchmarks widely recognized in prognostic literature: the <b>NASA Ames Prognostics Center of Excellence (PCoE)</b> dataset and the <b>CALCE Battery Research Group Archive</b> from the University of Maryland."
         "<br/>• <b>NASA Ames PCoE Benchmark:</b> Comprises commercially available 18650-format cylindrical lithium cobalt oxide ($\\text{LiCoO}_2$) cells (nominal capacity $2.0\\text{ Ah}$) cycled under repeated ambient temperature conditions ($24^\\circ\\text{C}$). Cells <b>B0005</b>, <b>B0006</b>, and <b>B0007</b> were charged under standard CC-CV protocol (1.5A CC to 4.2V, CV until current decayed to 20mA) and discharged at a continuous 2.0A CC load to cutoff thresholds of 2.7V, 2.5V, and 2.2V, respectively. Cell <b>B0018</b> was discharged at a higher load of 2.0A down to 2.5V with extended cycling (132 cycles), exhibiting severe non-linear degradation and a pronounced knee point."
         "<br/>• <b>CALCE Battery Archive:</b> Consists of prismatic $\\text{LiCoO}_2$ cells (nominal capacity $1.1\\text{ Ah}$) designated <b>CS2_35</b>, <b>CS2_36</b>, <b>CS2_37</b>, and <b>CS2_38</b>. These cells were cycled under high-rate dynamic charging (0.5C to 1C CC-CV) and 1C discharge, exhibiting pronounced capacity regeneration and abrupt end-of-life knee transitions across hundreds of cycles."
@@ -278,18 +485,16 @@ def build_report():
     story.append(Paragraph(data_p1, body_style))
     story.append(Spacer(1, 3))
 
-    # Embed Capacity & SOH Trajectory Figure
     img_traj = Path("results/figures/capacity_soh_trajectories.png")
     if img_traj.exists():
         story.append(Image(str(img_traj), width=530, height=140))
         story.append(Paragraph("Figure 1: Full lifecycle discharge capacity degradation and SOH trajectories across all 4 NASA Ames cells (left) and 4 CALCE cells (right), highlighting operational diversity, non-linear knee points, and capacity regeneration transients.", caption_style))
 
     story.append(Paragraph("3.1 Ingestion and Preprocessing Pipeline", subsec_heading))
-    pre_p1 = (
+    pre_p1 = fmt(
         "Raw laboratory battery logs comprise irregular, high-frequency time series of terminal voltage $V(t)$, current $I(t)$, and surface temperature $T(t)$. Direct ingestion of raw multi-step series into tabular regression induces heavy computational overhead. We implement an automated pipeline that parses nested MATLAB structs for NASA and multi-sheet Excel workbooks for CALCE, filtering out partial cycles, zero-current rests, and transient measurement artifacts. Charge and discharge phases are chronologically paired to extract contiguous cycle health representations."
     )
     story.append(Paragraph(pre_p1, body_style))
-
     story.append(PageBreak())
 
     # =========================================================================
@@ -297,7 +502,7 @@ def build_report():
     # =========================================================================
     story.append(PageMarker("PAGE 3: Feature Engineering & LOCO Cross-Validation"))
     story.append(Paragraph("3.2 Signal Conditioning & Feature Engineering (10 Health Indicators)", subsec_heading))
-    feat_p1 = (
+    feat_p1 = fmt(
         "We engineer <b>10 physically grounded electrochemical and thermal Health Indicators (HIs)</b> per cycle: "
         "<br/>1. <b>Constant-Current Charge Duration ($t_{\\text{CC}}$):</b> Duration in seconds of the linear CC charging stage before terminal voltage reaches 4.2V. As internal impedance increases, $t_{\\text{CC}}$ decreases monotonically."
         "<br/>2. <b>Constant-Voltage Charge Duration ($t_{\\text{CV}}$):</b> Time elapsed while voltage is clamped at 4.2V and current decays to cutoff. Increases with cell aging due to interfacial polarization."
@@ -313,22 +518,20 @@ def build_report():
     story.append(Paragraph(feat_p1, body_style))
     story.append(Spacer(1, 2))
 
-    # Embed Feature Heatmap
     img_corr = Path("results/figures/all_features_correlation_heatmap.png")
     if img_corr.exists():
         story.append(Image(str(img_corr), width=510, height=135))
-        story.append(Paragraph("Figure 2: Pearson correlation matrix across the 10 extracted Health Indicators and target SOH for NASA (left) and CALCE (right). Notice the exceptionally strong correlation of $t_{\\text{CC}}$ ($r = 0.98$) and $dQ/dV$ peak height ($r = 0.96$).", caption_style))
+        story.append(Paragraph(fmt("Figure 2: Pearson correlation matrix across the 10 extracted Health Indicators and target SOH for NASA (left) and CALCE (right). Notice the exceptionally strong correlation of $t_{\\text{CC}}$ ($r = 0.98$) and $dQ/dV$ peak height ($r = 0.96$)."), caption_style))
 
     story.append(Paragraph("3.3 Strict Leave-One-Cell-Out (LOCO) Cross-Validation Protocol", subsec_heading))
     loco_p = (
         "Standard random $k$-fold cross-validation in battery prognostics causes severe <b>data leakage</b>: cycles from early and late stages of the same battery cell leak into both train and test splits, producing artificially optimistic test metrics that collapse in practical deployment. To prevent data contamination, we enforce a strict <b>Leave-One-Cell-Out (LOCO)</b> validation scheme: for a cohort of 4 cells, each individual cell serves as the completely unseen held-out test cell. The remaining 3 cells are split chronologically (the first 85% of cycles allocated to train, and the terminal 15% allocated to validation). All standardization transformations (via `StandardScaler`) are fit strictly on the training partition and applied out-of-sample to validation and test folds. This setup is replicated across three fixed global seeds (42, 100, 2026), generating 12 independent evaluation runs per model family."
     )
     story.append(Paragraph(loco_p, body_style))
-
     story.append(PageBreak())
 
     # =========================================================================
-    # PAGE 4: 4. METHODOLOGY (ARCHITECTURE & FORMULATION)
+    # PAGE 4: 4. METHODOLOGY (ARCHITECTURE & MATHEMATICAL FORMULATION)
     # =========================================================================
     story.append(PageMarker("PAGE 4: Methodology (Architecture & Mathematical Formulation)"))
     story.append(Paragraph("4. Methodology", sec_heading))
@@ -338,38 +541,71 @@ def build_report():
     story.append(Paragraph(meth_p1, body_style))
 
     story.append(Paragraph("4.1 Wide-and-Deep Covariance Kernel Formulation", subsec_heading))
-    kernel_p = (
-        "Rather than utilizing standard stationary kernels (RBF, Matérn) that fail under cross-cell distribution shifts, we formulate an additive three-branch composite covariance operator $K_{\\text{total}}(\\mathbf{x}, \\mathbf{x}')$:"
-        "<br/>$$\\mathbf{K}_{\\text{total}}(\\mathbf{x}, \\mathbf{x}') = K_{\\text{wide}}(\\mathbf{x}, \\mathbf{x}') + K_{\\text{deep}}(\\mathbf{x}, \\mathbf{x}') + K_{\\text{stab}}(\\mathbf{x}, \\mathbf{x}')$$"
-        "<br/><b>1. Wide Linear Branch ($K_{\\text{wide}}$):</b> Formulated as an Automatic Relevance Determination (ARD) linear kernel:"
-        "<br/>$$K_{\\text{wide}}(\\mathbf{x}, \\mathbf{x}') = \\sigma_{\\text{wide}}^2 \\sum_{j=1}^{10} v_j x_j x_j'$$"
+    k_intro = fmt(
+        "Rather than utilizing standard stationary kernels (RBF, Matérn) that fail under cross-cell distribution shifts, we formulate an additive three-branch composite covariance operator $K_{\\text{total}}(\\mathbf{x}, \\mathbf{x}'):"
+    )
+    story.append(Paragraph(k_intro, body_style))
+    story.append(Image(str(EQ_DIR / "report_eq_1_composite.png"), width=440, height=21))
+    story.append(Spacer(1, 2))
+
+    k_wide = fmt(
+        "<b>1. Wide Linear Branch ($K_{\\text{wide}}$):</b> Formulated as an Automatic Relevance Determination (ARD) linear kernel:"
+    )
+    story.append(Paragraph(k_wide, body_style))
+    story.append(Image(str(EQ_DIR / "report_eq_2_wide.png"), width=390, height=20))
+    story.append(Spacer(1, 2))
+
+    k_wide_desc = fmt(
         "where $v_j \\ge 0$ represents the Bayesian variance weight allocated to input feature $j$. This branch captures global irreversible monotonic degradation and guarantees linear extrapolation capability beyond the training cycle horizon."
-        "<br/><b>2. Deep Matérn-5/2 Branch ($K_{\\text{deep}}$):</b> Non-linear degradation trajectories and sudden accelerated knee points are modeled by projecting input features into a compact embedding space via a deep Multi-Layer Perceptron (MLP) $\\phi(\\mathbf{x}) \\in \\mathbb{R}^8$ ($10 \\to 32 \\to 16 \\to 8$, LeakyReLU activations):"
-        "<br/>$$K_{\\text{deep}}(\\mathbf{x}, \\mathbf{x}') = \\sigma_{\\text{deep}}^2 \\left(1 + \\sqrt{5} d_{\\phi} + \\frac{5}{3} d_{\\phi}^2\\right) \\exp(-\\sqrt{5} d_{\\phi}), \\quad d_{\\phi} = \\sqrt{\\sum_{k=1}^8 \\frac{(\\phi_k(\\mathbf{x}) - \\phi_k(\\mathbf{x}'))^2}{\\ell_k^2}}$$"
+    )
+    story.append(Paragraph(k_wide_desc, body_style))
+
+    k_deep = fmt(
+        "<b>2. Deep Matérn-5/2 Branch ($K_{\\text{deep}}$):</b> Non-linear degradation trajectories and sudden accelerated knee points are modeled by projecting input features into a compact embedding space via a deep Multi-Layer Perceptron (MLP) $\\phi(\\mathbf{x}) \\in \\mathbb{R}^8$ ($10 \\to 32 \\to 16 \\to 8$, LeakyReLU activations):"
+    )
+    story.append(Paragraph(k_deep, body_style))
+    story.append(Image(str(EQ_DIR / "report_eq_3_deep.png"), width=470, height=25))
+    story.append(Spacer(1, 2))
+
+    k_deep_desc = fmt(
         "where $\\boldsymbol{\\ell} = [\\ell_1, \\dots, \\ell_8]^T$ denotes the deep ARD length-scale vector. The Matérn-5/2 kernel produces twice-differentiable sample paths, providing optimal smoothness without over-constraining the non-linear feature manifold."
         "<br/><b>3. Stabilizer RBF Branch ($K_{\\text{stab}}$):</b> An isotropic RBF kernel with tightly regularized outputscale $\\sigma_{\\text{stab}}^2 \\le 0.05$ acting directly on raw inputs $\\mathbf{x}$ to guarantee strict positive-definiteness of the covariance matrix and eliminate jitter."
     )
-    story.append(Paragraph(kernel_p, body_style))
+    story.append(Paragraph(k_deep_desc, body_style))
 
     story.append(Paragraph("4.2 Sparse Variational Gaussian Process (SVGP) Optimization", subsec_heading))
-    svgp_p = (
+    svgp_intro = fmt(
         "Exact GPR incurs $\\mathcal{O}(N^3)$ computational complexity and $\\mathcal{O}(N^2)$ memory storage, rendering it infeasible for long battery cycling datasets. We implement Sparse Variational Inference via $M=64$ learnable inducing points $\\mathbf{Z} = [\\mathbf{z}_1, \\dots, \\mathbf{z}_M]^T \\in \\mathbb{R}^{64 \\times 10}$ initialized using $k$-means clustering on training features. The variational distribution over inducing values $\\mathbf{u} = f(\\mathbf{Z})$ is parameterized as a multivariate Gaussian $q(\\mathbf{u}) = \\mathcal{N}(\\mathbf{m}, \\mathbf{S})$. The model parameters (MLP weights, kernel outputscales, ARD lengthscales, likelihood noise $\\sigma_{\\text{noise}}^2$, inducing points $\\mathbf{Z}$, and variational parameters $\\mathbf{m}, \\mathbf{S}$) are trained jointly by maximizing the Evidence Lower Bound (ELBO):"
-        "<br/>$$\\mathcal{L}_{\\text{ELBO}}(\\boldsymbol{\\theta}) = \\sum_{i=1}^N \\mathbb{E}_{q(f_i)}[\\log p(y_i \\mid f_i)] - D_{\\text{KL}}\\Big(q(\\mathbf{u}) \\;\\big\\|\\; p(\\mathbf{u})\\Big)$$"
+    )
+    story.append(Paragraph(svgp_intro, body_style))
+    story.append(Image(str(EQ_DIR / "report_eq_4_elbo.png"), width=440, height=22))
+    story.append(Spacer(1, 2))
+
+    svgp_desc = fmt(
         "where $D_{\\text{KL}}$ is the analytical Kullback-Leibler divergence between the variational distribution and the GP prior $p(\\mathbf{u}) = \\mathcal{N}(\\mathbf{0}, \\mathbf{K}_{\\mathbf{ZZ}})$. This reduces training complexity to $\\mathcal{O}(NM^2 + M^3)$ and enables stochastic mini-batch gradient descent via the Adam optimizer."
     )
-    story.append(Paragraph(svgp_p, body_style))
+    story.append(Paragraph(svgp_desc, body_style))
 
     story.append(Paragraph("4.3 Uncertainty-Weighted Symbolic Residual Correction", subsec_heading))
-    sr_p = (
-        "While SVGP effectively captures global degradation and calibrated uncertainty bands, empirical residuals $r_i = y_i - \\mu_{\\text{GPR}}(\\mathbf{x}_i)$ frequently retain systematic deterministic biases. Instead of training black-box models on residuals, we employ **Pareto-optimal Symbolic Regression (SR)** via genetic programming (PySR) to discover closed-form, interpretable analytical equations $\\hat{g}(\\mathbf{x})$."
+    sr_intro = fmt(
+        "While SVGP effectively captures global degradation and calibrated uncertainty bands, empirical residuals $r_i = y_i - \\mu_{\\text{GPR}}(\\mathbf{x}_i)$ frequently retain systematic deterministic biases. Instead of training black-box models on residuals, we employ <b>Pareto-optimal Symbolic Regression (SR)</b> via genetic programming (PySR) to discover closed-form, interpretable analytical equations $\\hat{g}(\\mathbf{x})$."
         "<br/>Standard Symbolic Regression minimizes Ordinary Least Squares (MSE), causing genetic search to aggressively overfit high-frequency measurement noise and capacity regeneration spikes. To establish robustness, we introduce an <b>Uncertainty-Weighted Objective</b> derived from maximum likelihood estimation under heteroscedastic GPR variance $\\sigma_{\\text{GPR}}^2(\\mathbf{x}_i)$:"
-        "<br/>$$\\mathcal{L}_{\\text{SR}}(\\hat{g}) = \\frac{\\sum_{i=1}^N w_i \\cdot \\big(r_i - \\hat{g}(\\mathbf{x}_i)\\big)^2}{\\sum_{i=1}^N w_i}, \\quad w_i = \\frac{1}{\\sigma_{\\text{GPR}}^2(\\mathbf{x}_i) + \\epsilon}$$"
+    )
+    story.append(Paragraph(sr_intro, body_style))
+    story.append(Image(str(EQ_DIR / "report_eq_5_sr.png"), width=450, height=24))
+    story.append(Spacer(1, 2))
+
+    sr_bound_intro = fmt(
         "where $\\epsilon = 10^{-6}$ provides numerical stabilization. The final composite prediction and calibrated uncertainty are synthesized as:"
-        "<br/>$$\\hat{y}(\\mathbf{x}^*) = \\mu_{\\text{GPR}}(\\mathbf{x}^*) + \\text{clip}\\big(\\hat{g}(\\mathbf{x}^*), -\\Delta_{\\max}, \\Delta_{\\max}\\big), \\qquad \\sigma_{\\text{total}}^2(\\mathbf{x}^*) = \\sigma_{\\text{GPR}}^2(\\mathbf{x}^*)$$"
+    )
+    story.append(Paragraph(sr_bound_intro, body_style))
+    story.append(Image(str(EQ_DIR / "report_eq_6_bound.png"), width=450, height=22))
+    story.append(Spacer(1, 2))
+
+    sr_bound_desc = fmt(
         "where $\\Delta_{\\max} = 3\\sigma_{\\text{GPR}}(\\mathbf{x}^*)$ ensures that symbolic corrections never destabilize the foundational Bayesian predictive envelope."
     )
-    story.append(Paragraph(sr_p, body_style))
-
+    story.append(Paragraph(sr_bound_desc, body_style))
     story.append(PageBreak())
 
     # =========================================================================
@@ -377,7 +613,7 @@ def build_report():
     # =========================================================================
     story.append(PageMarker("PAGE 5: Pseudocode, Hyperparameters & Master Benchmark"))
     story.append(Paragraph("4.4 Algorithmic Pseudocode", subsec_heading))
-    algo_box = (
+    algo_box = fmt(
         "<b>Algorithm 1: WD-GPR-SR Training and Inference Pipeline</b><br/>"
         "<b>Require:</b> Training splits $\\mathcal{D}_{\\text{train}} = \\{(\\mathbf{x}_i, y_i)\\}_{i=1}^N$, Validation set $\\mathcal{D}_{\\text{val}}$, Test query $\\mathbf{x}^*$.<br/>"
         "<b>Output:</b> Predictive mean $\\hat{y}(\\mathbf{x}^*)$, predictive variance $\\sigma^2(\\mathbf{x}^*)$, symbolic equation $\\hat{g}(\\mathbf{x})$.<br/>"
@@ -434,7 +670,6 @@ def build_report():
     )
     story.append(Paragraph(res_p1, body_style))
 
-    # Master Benchmark Comparison Table
     story.append(Paragraph("Table 1: Master Cross-Cell Benchmark Comparison across 14 Models on NASA PCoE and CALCE Datasets (Mean ± Std over 3 Seeds [42, 100, 2026] under strict Leave-One-Cell-Out Cross-Validation). Top-performing model bolded.", subsec_heading))
 
     bm_data = [
@@ -465,14 +700,12 @@ def build_report():
         ('BACKGROUND', (0,13), (-1,13), colors.HexColor("#E6FFFA")),
     ]))
     story.append(t_bm)
-
     story.append(PageBreak())
 
     # =========================================================================
     # PAGE 6: BENCHMARK VISUALIZATION & ABLATION STUDY
     # =========================================================================
     story.append(PageMarker("PAGE 6: Benchmark Analysis & Ablation Study"))
-    # Embed Benchmark Bar Chart
     img_bench = Path("results/figures/proposed_vs_baselines_comparison.png")
     if img_bench.exists():
         story.append(Image(str(img_bench), width=520, height=130))
@@ -485,7 +718,6 @@ def build_report():
     story.append(Paragraph(traj_p, body_style))
     story.append(Spacer(1, 2))
 
-    # Ablation Study
     story.append(Paragraph("5.2 Ablation Study: Architectural Decomposition", sec_heading))
     abl_p1 = (
         "To rigorously quantify the empirical contribution of each individual component, we evaluated four architectural variants across all 4 LOCO folds and the 3 global random seeds (96 total runs): "
@@ -519,17 +751,13 @@ def build_report():
     story.append(t_abl)
     story.append(Spacer(1, 2))
 
-    # Embed Ablation Study Figure
     img_abl = Path("results/figures/ablation_study_comparison.png")
     if img_abl.exists():
         story.append(Image(str(img_abl), width=520, height=115))
         story.append(Paragraph("Figure 4: Ablation study metrics comparison across Variants A, B, C, and D, demonstrating that incorporating the Wide Linear branch yields a 65% reduction in RMSE and boosts PICP-95 coverage from 71.0% to 98.8%.", caption_style))
-
     story.append(PageBreak())
 
-    # =========================================================================
-    # PAGE 7: EXPLAINABLE AI (XAI) MULTI-SCALE INTERPRETABILITY
-    # =========================================================================
+    # PAGE 7
     story.append(PageMarker("PAGE 7: Explainable AI (XAI) Suite"))
     story.append(Paragraph("5.3 Explainable AI (XAI) Multi-Scale Interpretability Suite", sec_heading))
     xai_intro = (
@@ -537,19 +765,17 @@ def build_report():
     )
     story.append(Paragraph(xai_intro, body_style))
 
-    # Embed SHAP Summary
     img_shap = Path("results/figures/shap_summary.png")
     if img_shap.exists():
         story.append(Image(str(img_shap), width=480, height=130))
-        story.append(Paragraph("Figure 5: SHAP Beeswarm feature attribution plot on NASA B0018. Constant-Current charge duration ($t_{\\text{CC}}$) exhibits the strongest positive attribution (high values correspond to healthy SOH), followed by Incremental Capacity peak height ($dQ/dV|_{\\max}$).", caption_style))
+        story.append(Paragraph(fmt("Figure 5: SHAP Beeswarm feature attribution plot on NASA B0018. Constant-Current charge duration ($t_{\\text{CC}}$) exhibits the strongest positive attribution (high values correspond to healthy SOH), followed by Incremental Capacity peak height ($dQ/dV|_{\\max}$)."), caption_style))
 
-    # Embed PDP / ICE
     img_pdp = Path("results/figures/pdp_ice.png")
     if img_pdp.exists():
         story.append(Image(str(img_pdp), width=480, height=130))
-        story.append(Paragraph("Figure 6: Partial Dependence (PDP) and Individual Conditional Expectation (ICE) curves for $t_{\\text{CC}}$ (left) and $dQ/dV|_{\\max}$ (right), displaying monotonic positive health response curves aligned with electrochemical degradation theory.", caption_style))
+        story.append(Paragraph(fmt("Figure 6: Partial Dependence (PDP) and Individual Conditional Expectation (ICE) curves for $t_{\\text{CC}}$ (left) and $dQ/dV|_{\\max}$ (right), displaying monotonic positive health response curves aligned with electrochemical degradation theory."), caption_style))
 
-    xai_p = (
+    xai_p = fmt(
         "<b>1. Global Feature Attribution (SHAP):</b> As evidenced in Figure 5, the SHAP beeswarm analysis confirms that $t_{\\text{CC}}$ is the primary driver of predicted SOH (mean absolute SHAP value = 0.048). As the battery degrades, internal resistance growth truncates the CC charging phase, pushing the cell prematurely into CV clamping. The second most influential feature is $dQ/dV|_{\\max}$ (SHAP value = 0.032), capturing the loss of active lithium inventory."
         "<br/><b>2. Local Interpretability (LIME):</b> Local surrogate modeling on a severely degraded cycle (SOH < 75%) indicated that short $t_{\\text{CC}}$ contributed -12.4% to the predicted capacity drop, while reduced voltage plateau duration contributed -4.2%, precisely pinpointing the physical degradation mechanisms for that individual cycle."
         "<br/><b>3. Marginal Responses (PDP / ICE):</b> The PDP curves in Figure 6 reveal smooth, strictly monotonic relationships between the top two Health Indicators and battery health. The ICE curves exhibit minimal dispersion, proving that feature interactions remain well-behaved without localized instabilities."
@@ -557,15 +783,12 @@ def build_report():
         "<br/><b>5. Dynamic Lifecycle Sensitivity:</b> Tracking analytical gradient sensitivities $|\\partial \\hat{y} / \\partial x_j|$ across all 132 operating cycles shows an abrupt 3.8x surge at cycle 100 (SOH < 80%), quantitatively detecting the physical onset of the <b>degradation knee point</b>."
     )
     story.append(Paragraph(xai_p, body_style))
-
     story.append(PageBreak())
 
-    # =========================================================================
-    # PAGE 8: EDGE AI DEPLOYMENT, CONCLUSION & REFERENCES
-    # =========================================================================
+    # PAGE 8
     story.append(PageMarker("PAGE 8: Jetson Edge AI, Conclusion & References"))
     story.append(Paragraph("5.4 Embedded Edge AI Deployment on NVIDIA Jetson Orin Nano", sec_heading))
-    jet_p = (
+    jet_p = fmt(
         "To validate industrial deployment feasibility, the trained WD-GPR-SR model (`B0018`) was optimized for the <b>NVIDIA Jetson Orin Nano</b> (15W MAXN power profile, 8GB shared LPDDR5). The deep feature extractor $\\phi(\\mathbf{x})$ was compiled into a <b>TensorRT FP16 engine</b> (`models/deep_branch.engine`). The Sparse GP predictive equations were linearized into static matrix operations (inner products and quadratic forms via `models/gp_arrays.h`), and the symbolic residual correction was compiled into a standalone C shared library (`models/symbolic.so`). The deployment pipeline was benchmarked over <b>50 DVFS stabilization warm-up cycles</b> and <b>1,000 timed inference loops</b> using high-resolution monotonic system timers (`time.perf_counter_ns()`)."
     )
     story.append(Paragraph(jet_p, body_style))
@@ -604,7 +827,7 @@ def build_report():
 
     # 6. CONCLUSION AND REFERENCES
     story.append(Paragraph("6. Conclusion and References", sec_heading))
-    concl_p = (
+    concl_p = fmt(
         "In this project, we conceptualized, developed, and experimentally validated <b>WD-GPR-SR</b>, an interpretable and uncertainty-calibrated framework for lithium-ion battery State-of-Health prediction. By integrating a Wide-and-Deep Sparse Gaussian Process with Uncertainty-Weighted Symbolic Regression, our architecture resolves the long-standing dichotomy between black-box empirical accuracy and transparent physics-grounded interpretability. Evaluated under strict Leave-One-Cell-Out cross-validation across NASA and CALCE datasets over three random seeds, WD-GPR-SR achieves state-of-the-art accuracy (0.992% RMSE on NASA, 0.130% on CALCE) with calibrated 98.8% PICP coverage, outperforming 13 baseline algorithms. Comprehensive XAI analysis confirmed that constant-current charge duration ($t_{\\text{CC}}$) and incremental capacity peak height ($dQ/dV|_{\\max}$) govern aging trajectories. Finally, edge optimization for the NVIDIA Jetson Orin Nano demonstrated microsecond inference latency (0.110 ms) and ultra-low energy (1.48 mJ), establishing a production-ready paradigm for next-generation intelligent Battery Management Systems."
     )
     story.append(Paragraph(concl_p, body_style))
@@ -618,12 +841,24 @@ def build_report():
         "[5] S. M. Lundberg and S.-I. Lee, 'A Unified Approach to Interpreting Model Predictions,' <i>NeurIPS</i>, 2017.<br/>"
         "[6] ISO 26262-1:2018, 'Road vehicles — Functional safety,' International Organization for Standardization, Geneva, Switzerland, 2018."
     )
-    story.append(Paragraph(ref_text, ParagraphStyle("RefStyle", parent=body_style, fontSize=6.5, leading=8.0, textColor=colors.HexColor("#4A5568"))))
+    story.append(Paragraph(ref_text, ParagraphStyle("RefStyle", fontName=FONT_REGULAR, fontSize=6.5, leading=8.0, textColor=colors.HexColor("#4A5568"))))
 
     # Build Document
-    print(f"Compiling {pdf_filename} with NumberedCanvas...")
+    print(f"Compiling {target_path.name} with NumberedCanvas...")
     doc.build(story, canvasmaker=NumberedCanvas)
-    print(f"[OK] Successfully built {pdf_filename} ({Path(pdf_filename).stat().st_size:,} bytes).")
+    print(f"[OK] Successfully built {target_path.name} ({target_path.stat().st_size:,} bytes).")
+
+    # If wrote to alt path, attempt copy to primary
+    primary = BASE_DIR / "2401CS29_MLProject.pdf"
+    if target_path != primary:
+        try:
+            shutil.copyfile(target_path, primary)
+            print(f"[SUCCESS] Successfully updated primary file: {primary.name}!")
+            target_path.unlink()
+        except Exception:
+            print(f"[NOTE] '{primary.name}' remains locked by Adobe Acrobat.")
+            print(f"       You can view the updated PDF at: '{target_path.name}'.")
+            print(f"       Once closed in Acrobat, run 'python src/generate_report.py' to overwrite '{primary.name}'.")
 
 if __name__ == "__main__":
     build_report()
