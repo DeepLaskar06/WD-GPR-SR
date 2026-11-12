@@ -5,13 +5,15 @@ Email: moonis_2401cs29@iitp.ac.in
 Institution: Indian Institute of Technology Patna (IIT Patna)
 Department: Department of Computer Science & Engineering
 Project: WD-GPR-SR: When Uncertainty Meets Equations in Battery Health Prediction
-Target Guideline: Exactly 15-Page Comprehensive Academic Research Report
-Includes TrueType Font Embedding & Proper Mathematical Typography (No Raw LaTeX Strings)
+Target Guideline: Exactly 15-Page Strict Academic Research Report
+Aesthetic: Pure Black and White Professional Academic Typography (Times New Roman / Booktabs)
+All embedded .png plots and diagrams retain their full original colors.
 """
 
 import sys
 import os
 import shutil
+import re
 from pathlib import Path
 import pandas as pd
 import numpy as np
@@ -37,28 +39,34 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
 # =====================================================================
-# TrueType Font Registration for Proper Unicode Math & Acrobat Compatibility
+# TrueType Font Registration: Times New Roman (Academic Standard Serif)
 # =====================================================================
-FONT_REGULAR = "Helvetica"
-FONT_BOLD = "Helvetica-Bold"
-FONT_ITALIC = "Helvetica-Oblique"
+FONT_REGULAR = "Times-Roman"
+FONT_BOLD = "Times-Bold"
+FONT_ITALIC = "Times-Italic"
+FONT_BOLD_ITALIC = "Times-BoldItalic"
 
-ttf_candidates = [
-    ("SegoeUI", "C:/Windows/Fonts/segoeui.ttf", "SegoeUI-Bold", "C:/Windows/Fonts/segoeuib.ttf", "SegoeUI-Italic", "C:/Windows/Fonts/segoeuii.ttf"),
-    ("Arial", "C:/Windows/Fonts/arial.ttf", "Arial-Bold", "C:/Windows/Fonts/arialbd.ttf", "Arial-Italic", "C:/Windows/Fonts/ariali.ttf"),
+ttf_times = [
+    ("TimesNewRoman", "C:/Windows/Fonts/times.ttf",
+     "TimesNewRoman-Bold", "C:/Windows/Fonts/timesbd.ttf",
+     "TimesNewRoman-Italic", "C:/Windows/Fonts/timesi.ttf",
+     "TimesNewRoman-BoldItalic", "C:/Windows/Fonts/timesbi.ttf"),
 ]
 
-for reg_name, reg_path, bold_name, bold_path, ital_name, ital_path in ttf_candidates:
+for reg_name, reg_path, bold_name, bold_path, ital_name, ital_path, bi_name, bi_path in ttf_times:
     if os.path.exists(reg_path) and os.path.exists(bold_path):
         try:
             pdfmetrics.registerFont(TTFont(reg_name, reg_path))
             pdfmetrics.registerFont(TTFont(bold_name, bold_path))
             if os.path.exists(ital_path):
                 pdfmetrics.registerFont(TTFont(ital_name, ital_path))
-                FONT_ITALIC = ital_name
+            if os.path.exists(bi_path):
+                pdfmetrics.registerFont(TTFont(bi_name, bi_path))
             FONT_REGULAR = reg_name
             FONT_BOLD = bold_name
-            print(f"[OK] Registered TrueType fonts: {FONT_REGULAR}, {FONT_BOLD}, {FONT_ITALIC}")
+            FONT_ITALIC = ital_name
+            FONT_BOLD_ITALIC = bi_name
+            print(f"[OK] Registered TrueType Academic Serif Fonts: {FONT_REGULAR}, {FONT_BOLD}, {FONT_ITALIC}")
             break
         except Exception as e:
             print(f"[WARN] Font registration note: {e}")
@@ -73,7 +81,7 @@ MATH_MAP = {
     r"$\Delta T_{\text{dis}}$": "&#916;<i>T</i><sub>dis</sub>",
     r"$T_{\max}$": "<i>T</i><sub>max</sub>",
     r"$dT/dt|_{\max}$": "<i>dT/dt</i>|<sub>max</sub>",
-    r"$\bar{V}_{\text{dis}}$": "<i>V̄</i><sub>dis</sub>",
+    r"$\bar{V}_{\text{dis}}$": "<i>V&#772;</i><sub>dis</sub>",
     r"$dQ/dV|_{\max}$": "<i>dQ/dV</i>|<sub>max</sub>",
     r"$V_{\text{peak}}$": "<i>V</i><sub>peak</sub>",
     r"$\text{Area}_{\text{IC}}$": "Area<sub>IC</sub>",
@@ -91,11 +99,14 @@ MATH_MAP = {
     r"$\mathcal{N}$": "<i>N</i>",
     r"$\mathcal{L}_{\text{SVGP}}$": "<i>L</i><sub>SVGP</sub>",
     r"$w_i = 1/(\sigma_{\text{GP}}^2 + \epsilon)$": "<i>w</i><sub><i>i</i></sub> = 1/(&#963;<sub>GP</sub><sup>2</sup> + &#949;)",
+    r"$w_i = 1/(\sigma_i^2 + \epsilon)$": "<i>w</i><sub><i>i</i></sub> = 1/(&#963;<sub><i>i</i></sub><sup>2</sup> + &#949;)",
     r"$f^*(\mathbf{x})$": "<i>f</i>*(<b>x</b>)",
+    r"$f^*(\mathbf{x}_*)$": "<i>f</i>*(<b>x</b><sub>*</sub>)",
     r"$f_{\text{SR}}(\mathbf{x})$": "<i>f</i><sub>SR</sub>(<b>x</b>)",
     r"$r_i = y_i - \mu_{\text{GP}}(\mathbf{x}_i)$": "<i>r</i><sub><i>i</i></sub> = <i>y</i><sub><i>i</i></sub> - &#956;<sub>GP</sub>(<b>x</b><sub><i>i</i></sub>)",
     r"$O(N^3)$": "<i>O</i>(<i>N</i><sup>3</sup>)",
     r"$O(M^2 N)$": "<i>O</i>(<i>M</i><sup>2</sup><i>N</i>)",
+    r"$O(N^2)$": "<i>O</i>(<i>N</i><sup>2</sup>)",
     r"$M=64$": "<i>M</i> = 64",
     r"$\text{clip}$": "clip",
     r"$\lambda \cdot \text{Complexity}$": "&#955; &middot; Complexity",
@@ -107,6 +118,51 @@ MATH_MAP = {
     r"$\beta$": "&#946;",
     r"$\gamma$": "&#947;",
     r"$\delta$": "&#948;",
+    r"$SOH = Q_{\text{curr}} / Q_{\text{nom}} \times 100\%$": "<i>SOH</i> = <i>Q</i><sub>curr</sub> / <i>Q</i><sub>nom</sub> &times; 100%",
+    r"$\le 100$": "&le; 100",
+    r"$\sigma_{\text{GP}}^2(\mathbf{x})$": "&#963;<sub>GP</sub><sup>2</sup>(<b>x</b>)",
+    r"$N \times N$": "<i>N</i> &times; <i>N</i>",
+    r"$I > 0.01$": "<i>I</i> &gt; 0.01",
+    r"$I < -0.01$": "<i>I</i> &lt; -0.01",
+    r"$|\Delta Q| > 0.15$": "|&#916;<i>Q</i>| &gt; 0.15",
+    r"$I^2 R$": "<i>I</i><sup>2</sup><i>R</i>",
+    r"$I^2R$": "<i>I</i><sup>2</sup><i>R</i>",
+    r"$\Delta T = T_{\max} - T_{\text{start}}$": "&#916;<i>T</i> = <i>T</i><sub>max</sub> - <i>T</i><sub>start</sub>",
+    r"$dQ/dV$": "<i>dQ/dV</i>",
+    r"$\mathbf{x} \in \mathbb{R}^{10}$": "<b>x</b> &isin; <b>R</b><sup>10</sup>",
+    r"$\phi(\mathbf{x}): \mathbb{R}^{10} \to \mathbb{R}^{16} \to \mathbb{R}^8$": "&#981;(<b>x</b>): <b>R</b><sup>10</sup> &rarr; <b>R</b><sup>16</sup> &rarr; <b>R</b><sup>8</sup>",
+    r"$k_{\text{WD}}(\mathbf{x}, \mathbf{x}')$": "<i>k</i><sub>WD</sub>(<b>x</b>, <b>x&#39;</b>)",
+    r"$\mathbf{\Sigma}_{\text{ARD}} = \text{diag}(\ell_1^2, \dots, \ell_{10}^2)$": "<b>&#931;</b><sub>ARD</sub> = diag(&#8467;<sub>1</sub><sup>2</sup>, ..., &#8467;<sub>10</sub><sup>2</sup>)",
+    r"$d_M = \sqrt{5} \|\phi(\mathbf{x}) - \phi(\mathbf{x}')\| / \ell_{\text{deep}}$": "<i>d</i><sub><i>M</i></sub> = &radic;(5) &Vert;&#981;(<b>x</b>) - &#981;(<b>x&#39;</b>)&Vert; / &#8467;<sub>deep</sub>",
+    r"$\mathbf{Z} = \{\mathbf{z}_m\}_{m=1}^M$": "<b>Z</b> = {<b>z</b><sub><i>m</i></sub>}<sub><i>m</i>=1</sub><sup><i>M</i></sup>",
+    r"$q(\mathbf{u}) = \mathcal{N}(\mathbf{m}, \mathbf{S})$": "<i>q</i>(<b>u</b>) = <i>N</i>(<b>m</b>, <b>S</b>)",
+    r"$\mathbf{u} = f(\mathbf{Z})$": "<b>u</b> = <i>f</i>(<b>Z</b>)",
+    r"$\mu_{\text{GP}}(\mathbf{x}_*)$": "&#956;<sub>GP</sub>(<b>x</b><sub>*</sub>)",
+    r"$\sigma_{\text{GP}}^2(\mathbf{x}_*)$": "&#963;<sub>GP</sub><sup>2</sup>(<b>x</b><sub>*</sub>)",
+    r"$\mathcal{D} = \{(\mathbf{x}_i, y_i)\}_{i=1}^N$": "<i>D</i> = {(<b>x</b><sub><i>i</i></sub>, <i>y</i><sub><i>i</i></sub>)}<sub><i>i</i>=1</sub><sup><i>N</i></sup>",
+    r"$G=40$": "<i>G</i> = 40",
+    r"$\epsilon = 10^{-4}$": "&#949; = 10<sup>-4</sup>",
+    r"$\mathbf{x} = [t_{\text{CC}}, t_{\text{CV}}, t_{3.8-4.1\text{V}}, \Delta T_{\text{dis}}, T_{\max}, dT/dt|_{\max}, \bar{V}_{\text{dis}}, dQ/dV|_{\max}, V_{\text{peak}}, \text{Area}_{\text{IC}}]^T$": "<b>x</b> = [<i>t</i><sub>CC</sub>, <i>t</i><sub>CV</sub>, <i>t</i><sub>3.8-4.1V</sub>, &#916;<i>T</i><sub>dis</sub>, <i>T</i><sub>max</sub>, <i>dT/dt</i>|<sub>max</sub>, <i>V&#772;</i><sub>dis</sub>, <i>dQ/dV</i>|<sub>max</sub>, <i>V</i><sub>peak</sub>, Area<sub>IC</sub>]<sup><i>T</i></sup>",
+    r"$k_{\text{wide}}(\mathbf{x}, \mathbf{x}')$": "<i>k</i><sub>wide</sub>(<b>x</b>, <b>x&#39;</b>)",
+    r"$\phi(\mathbf{x}): 10 \to 16 \to 8$": "&#981;(<b>x</b>): 10 &rarr; 16 &rarr; 8",
+    r"$\mathbf{Z}$": "<b>Z</b>",
+    r"$\mu_{\text{GP}}(\mathbf{x}_i)$": "&#956;<sub>GP</sub>(<b>x</b><sub><i>i</i></sub>)",
+    r"$\sigma_{\text{GP}}^2(\mathbf{x}_i)$": "&#963;<sub>GP</sub><sup>2</sup>(<b>x</b><sub><i>i</i></sub>)",
+    r"$\sum_{i=1}^N w_i (r_i - f_{\text{SR}}(\mathbf{x}_i))^2 + \lambda \cdot \text{Complexity}$": "&sum; <i>w</i><sub><i>i</i></sub>(<i>r</i><sub><i>i</i></sub> - <i>f</i><sub>SR</sub>(<b>x</b><sub><i>i</i></sub>))<sup>2</sup> + &#955; &middot; Complexity",
+    r"$f_{\text{SR}}^*$": "<i>f</i><sub>SR</sub>*",
+    r"$\mathbf{x}_*$": "<b>x</b><sub>*</sub>",
+    r"$f^*(\mathbf{x}_*) = \mu_{\text{GP}}(\mathbf{x}_*) + \text{clip}(f_{\text{SR}}^*(\mathbf{x}_*), -3\sigma_{\text{GP}}(\mathbf{x}_*), +3\sigma_{\text{GP}}(\mathbf{x}_*))$": "<i>f</i>*(<b>x</b><sub>*</sub>) = &#956;<sub>GP</sub>(<b>x</b><sub>*</sub>) + clip(<i>f</i><sub>SR</sub>*(<b>x</b><sub>*</sub>), -3&#963;<sub>GP</sub>(<b>x</b><sub>*</sub>), +3&#963;<sub>GP</sub>(<b>x</b><sub>*</sub>))",
+    r"$\text{RMSE} = \sqrt{\frac{1}{N}\sum_{i=1}^N (y_i - \hat{y}_i)^2}$": "RMSE = &radic;( (1/<i>N</i>) &sum; (<i>y</i><sub><i>i</i></sub> - <i>y&#770;</i><sub><i>i</i></sub>)<sup>2</sup> )",
+    r"$\text{MAE} = \frac{1}{N}\sum_{i=1}^N |y_i - \hat{y}_i|$": "MAE = (1/<i>N</i>) &sum; |<i>y</i><sub><i>i</i></sub> - <i>y&#770;</i><sub><i>i</i></sub>|",
+    r"$\text{MAPE} = \frac{100\%}{N}\sum_{i=1}^N |(y_i - \hat{y}_i)/y_i|$": "MAPE = (100%/<i>N</i>) &sum; |(<i>y</i><sub><i>i</i></sub> - <i>y&#770;</i><sub><i>i</i></sub>)/<i>y</i><sub><i>i</i></sub>|",
+    r"$[\hat{y} \pm 1.96\sigma]$": "[<i>y&#770;</i> &plusmn; 1.96&#963;]",
+    r"$[\mu \pm 1.96\sigma]$": "[&#956; &plusmn; 1.96&#963;]",
+    r"$+3.5\%$": "+3.5%",
+    r"$+6.0\%$": "+6.0%",
+    r"$-2.5\%$": "-2.5%",
+    r"$-4.2\%$": "-4.2%",
+    r"$\Delta T_{\text{dis}} > 12.5$": "&#916;<i>T</i><sub>dis</sub> &gt; 12.5",
+    r"$\phi(\mathbf{x}): \mathbb{R}^{10} \to \mathbb{R}^8$": "&#981;(<b>x</b>): <b>R</b><sup>10</sup> &rarr; <b>R</b><sup>8</sup>",
 }
 
 def fmt(text: str) -> str:
@@ -115,7 +171,6 @@ def fmt(text: str) -> str:
         text = text.replace(k, MATH_MAP[k])
     
     # Generic regex cleanup for any remaining LaTeX commands or unescaped math
-    import re
     text = re.sub(r'\\text\{([^}]+)\}', r'\1', text)
     text = re.sub(r'\\mathbf\{([^}]+)\}', r'<b>\1</b>', text)
     text = re.sub(r'\\mathbb\{R\}\^\{?([0-9]+)\}?', r'<b>R</b><sup>\1</sup>', text)
@@ -166,7 +221,7 @@ def get_writable_target_path(filename: str = "Moonis_2401CS29.pdf") -> Path:
         return alt
 
 # =====================================================================
-# Numbered Canvas for Running Headers and Footers
+# Numbered Canvas for Academic Running Headers and Footers (Strict B&W)
 # =====================================================================
 class NumberedCanvas(canvas.Canvas):
     def __init__(self, *args, **kwargs):
@@ -187,27 +242,29 @@ class NumberedCanvas(canvas.Canvas):
 
     def draw_page_decorations(self, total_pages):
         self.saveState()
-        self.setFont(FONT_REGULAR, 8)
-        self.setFillColor(colors.HexColor("#4A5568"))
+        self.setFont(FONT_REGULAR, 8.5)
+        self.setFillColor(colors.black)
 
         # Running Header (pages > 1)
         if self._pageNumber > 1:
+            self.setFont(FONT_ITALIC, 8.0)
             self.drawString(
                 36, 762,
                 "WD-GPR-SR: When Uncertainty Meets Equations in Battery Health Prediction | Moonis Laskar (2401CS29)"
             )
-            self.setStrokeColor(colors.HexColor("#CBD5E0"))
-            self.setLineWidth(0.5)
+            self.setStrokeColor(colors.black)
+            self.setLineWidth(0.6)
             self.line(36, 756, 576, 756)
 
         # Running Footer (all pages)
-        self.setStrokeColor(colors.HexColor("#CBD5E0"))
-        self.setLineWidth(0.5)
+        self.setStrokeColor(colors.black)
+        self.setLineWidth(0.6)
         self.line(36, 38, 576, 38)
         
+        self.setFont(FONT_REGULAR, 8.0)
         footer_text = f"Page {self._pageNumber} of {total_pages}"
         self.drawRightString(576, 26, footer_text)
-        self.drawString(36, 26, "Machine Learning PBL Project | Dept. of Computer Science & Engineering | IIT Patna")
+        self.drawString(36, 26, "Department of Computer Science & Engineering, IIT Patna | B.Tech ML Project Report")
         self.restoreState()
 
 
@@ -232,33 +289,33 @@ def build_report():
         bottomMargin=44,
     )
 
-    styles = getSampleStyleSheet()
-
-    # Reusable styles
+    # =========================================================================
+    # Strict Academic B&W Paragraph Styles (Times New Roman / Pure Black)
+    # =========================================================================
     sec_heading = ParagraphStyle(
         "ReportSecHeading",
         fontName=FONT_BOLD,
-        fontSize=10.2,
-        leading=12.5,
-        textColor=colors.HexColor("#1A365D"),
-        spaceBefore=3,
+        fontSize=10.5,
+        leading=13.0,
+        textColor=colors.black,
+        spaceBefore=3.5,
         spaceAfter=1.5,
     )
     subsec_heading = ParagraphStyle(
         "ReportSubSecHeading",
         fontName=FONT_BOLD,
-        fontSize=8.8,
-        leading=11.0,
-        textColor=colors.HexColor("#2C5282"),
+        fontSize=9.0,
+        leading=11.5,
+        textColor=colors.black,
         spaceBefore=2.5,
         spaceAfter=1.0,
     )
     body_style = ParagraphStyle(
         "ReportBody",
         fontName=FONT_REGULAR,
-        fontSize=7.8,
-        leading=10.0,
-        textColor=colors.HexColor("#2D3748"),
+        fontSize=8.0,
+        leading=10.4,
+        textColor=colors.black,
         alignment=TA_JUSTIFY,
         spaceAfter=2.5,
     )
@@ -266,113 +323,115 @@ def build_report():
         "ReportBodyBold",
         parent=body_style,
         fontName=FONT_BOLD,
-        textColor=colors.HexColor("#1A202C"),
+        textColor=colors.black,
     )
     bullet_style = ParagraphStyle(
         "ReportBullet",
         fontName=FONT_REGULAR,
-        fontSize=7.6,
-        leading=9.6,
-        textColor=colors.HexColor("#2D3748"),
+        fontSize=7.8,
+        leading=10.0,
+        textColor=colors.black,
         leftIndent=12,
         firstLineIndent=-8,
-        spaceAfter=1.8,
+        spaceAfter=2.0,
         alignment=TA_JUSTIFY,
     )
     caption_style = ParagraphStyle(
         "ReportCaption",
         fontName=FONT_REGULAR,
-        fontSize=6.8,
-        leading=8.6,
-        textColor=colors.HexColor("#4A5568"),
+        fontSize=7.0,
+        leading=9.0,
+        textColor=colors.black,
         alignment=TA_CENTER,
-        spaceBefore=1.5,
+        spaceBefore=2.0,
         spaceAfter=2.5,
     )
     table_cell = ParagraphStyle(
         "ReportTableCell",
         fontName=FONT_REGULAR,
-        fontSize=7.0,
-        leading=8.5,
-        textColor=colors.HexColor("#2D3748"),
+        fontSize=7.2,
+        leading=8.8,
+        textColor=colors.black,
         alignment=TA_CENTER,
     )
     table_cell_left = ParagraphStyle(
         "ReportTableCellLeft",
         fontName=FONT_REGULAR,
-        fontSize=7.0,
-        leading=8.5,
-        textColor=colors.HexColor("#2D3748"),
+        fontSize=7.2,
+        leading=8.8,
+        textColor=colors.black,
         alignment=TA_LEFT,
     )
     table_cell_bold = ParagraphStyle(
         "ReportTableCellBold",
         fontName=FONT_BOLD,
-        fontSize=7.0,
-        leading=8.5,
-        textColor=colors.HexColor("#1A202C"),
+        fontSize=7.2,
+        leading=8.8,
+        textColor=colors.black,
         alignment=TA_CENTER,
     )
     table_header = ParagraphStyle(
         "ReportTableHeader",
         fontName=FONT_BOLD,
-        fontSize=7.2,
-        leading=8.8,
-        textColor=colors.white,
+        fontSize=7.4,
+        leading=9.0,
+        textColor=colors.black,
         alignment=TA_CENTER,
     )
 
+    # Academic Chapter Banner (Clean Black & White Top/Bottom Rules)
     def chapter_banner(chap_num: int, chap_title: str):
         banner_data = [[
-            Paragraph(f"<b>CHAPTER {chap_num}</b>", ParagraphStyle("CB1", fontName=FONT_BOLD, fontSize=8.5, textColor=colors.HexColor("#D4AF37"), alignment=TA_LEFT)),
-            Paragraph(f"<b>{chap_title.upper()}</b>", ParagraphStyle("CB2", fontName=FONT_BOLD, fontSize=11.0, textColor=colors.white, alignment=TA_RIGHT))
+            Paragraph(f"<b>CHAPTER {chap_num}</b>", ParagraphStyle("CB1", fontName=FONT_BOLD, fontSize=9.0, textColor=colors.black, alignment=TA_LEFT)),
+            Paragraph(f"<b>{chap_title.upper()}</b>", ParagraphStyle("CB2", fontName=FONT_BOLD, fontSize=10.5, textColor=colors.black, alignment=TA_RIGHT))
         ]]
         t = Table(banner_data, colWidths=[140, 400])
         t.setStyle(TableStyle([
-            ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#0A2540")),
+            ('LINEABOVE', (0,0), (-1,-1), 1.2, colors.black),
+            ('LINEBELOW', (0,0), (-1,-1), 1.2, colors.black),
             ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-            ('TOPPADDING', (0,0), (-1,-1), 4.5),
-            ('BOTTOMPADDING', (0,0), (-1,-1), 4.5),
-            ('LEFTPADDING', (0,0), (-1,-1), 10),
-            ('RIGHTPADDING', (0,0), (-1,-1), 10),
-            ('LINEBELOW', (0,0), (-1,-1), 2, colors.HexColor("#D4AF37")),
+            ('TOPPADDING', (0,0), (-1,-1), 3.5),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 3.5),
+            ('LEFTPADDING', (0,0), (-1,-1), 4),
+            ('RIGHTPADDING', (0,0), (-1,-1), 4),
         ]))
         return t
 
     def section_divider():
-        return HRFlowable(width="100%", thickness=0.5, color=colors.HexColor("#E2E8F0"), spaceBefore=2, spaceAfter=2)
+        return HRFlowable(width="100%", thickness=0.5, color=colors.black, spaceBefore=2, spaceAfter=2)
 
     story = []
 
     # =========================================================================
-    # PAGE 1: FORMAL TITLE PAGE
+    # PAGE 1: FORMAL TITLE PAGE (Pure B&W Academic Style)
     # =========================================================================
     story.append(PageMarker("PAGE 1: Formal Title Page"))
     story.append(Spacer(1, 15))
     
-    inst_style = ParagraphStyle("InstHead", fontName=FONT_BOLD, fontSize=15, leading=19, textColor=colors.HexColor("#0A2540"), alignment=TA_CENTER)
-    dept_style = ParagraphStyle("DeptHead", fontName=FONT_BOLD, fontSize=10.5, leading=14, textColor=colors.HexColor("#D4AF37"), alignment=TA_CENTER)
+    inst_style = ParagraphStyle("InstHead", fontName=FONT_BOLD, fontSize=15, leading=19, textColor=colors.black, alignment=TA_CENTER)
+    dept_style = ParagraphStyle("DeptHead", fontName=FONT_BOLD, fontSize=11, leading=14, textColor=colors.black, alignment=TA_CENTER)
     story.append(Paragraph("INDIAN INSTITUTE OF TECHNOLOGY PATNA", inst_style))
     story.append(Paragraph("DEPARTMENT OF COMPUTER SCIENCE &amp; ENGINEERING", dept_style))
-    story.append(Spacer(1, 18))
+    story.append(Spacer(1, 16))
 
+    # IIT Patna Logo (Original seal retained)
     logo_path = BASE_DIR / "results" / "poster_assets" / "iitp_logo.png"
     if logo_path.exists():
         story.append(Image(str(logo_path), width=105, height=105))
-    story.append(Spacer(1, 18))
+    story.append(Spacer(1, 16))
 
-    pbl_badge = ParagraphStyle("PBLBadge", fontName=FONT_BOLD, fontSize=9.5, leading=13, textColor=colors.HexColor("#153B64"), alignment=TA_CENTER)
+    pbl_badge = ParagraphStyle("PBLBadge", fontName=FONT_REGULAR, fontSize=9.5, leading=13, textColor=colors.black, alignment=TA_CENTER)
     story.append(Paragraph("BACHELOR OF TECHNOLOGY (B.TECH) &bull; PROJECT-BASED LEARNING (PBL)", pbl_badge))
-    story.append(Spacer(1, 14))
+    story.append(Spacer(1, 12))
 
-    title_style = ParagraphStyle("ReportTitle", fontName=FONT_BOLD, fontSize=19, leading=23, textColor=colors.HexColor("#06182B"), alignment=TA_CENTER)
-    sub_style = ParagraphStyle("ReportSub", fontName=FONT_ITALIC, fontSize=10.5, leading=14.5, textColor=colors.HexColor("#4A5568"), alignment=TA_CENTER)
+    title_style = ParagraphStyle("ReportTitle", fontName=FONT_BOLD, fontSize=19, leading=23, textColor=colors.black, alignment=TA_CENTER)
+    sub_style = ParagraphStyle("ReportSub", fontName=FONT_ITALIC, fontSize=10.5, leading=14.5, textColor=colors.black, alignment=TA_CENTER)
     story.append(Paragraph("WD-GPR-SR: When Uncertainty Meets Equations in Battery Health Prediction", title_style))
     story.append(Spacer(1, 8))
     story.append(Paragraph("A Wide-and-Deep Gaussian Process Regression Architecture with Uncertainty-Weighted Symbolic Residual Correction for Calibrated State-of-Health Estimation", sub_style))
-    story.append(Spacer(1, 20))
+    story.append(Spacer(1, 18))
 
-    story.append(HRFlowable(width="60%", thickness=2, color=colors.HexColor("#D4AF37"), spaceBefore=0, spaceAfter=22))
+    story.append(HRFlowable(width="70%", thickness=1.2, color=colors.black, spaceBefore=0, spaceAfter=20))
 
     meta_table_data = [
         [Paragraph("<b>Author / Candidate:</b>", table_cell_left), Paragraph("Moonis Laskar", table_cell_left)],
@@ -385,18 +444,19 @@ def build_report():
     ]
     t_meta = Table(meta_table_data, colWidths=[160, 280])
     t_meta.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#F8FAFC")),
-        ('BOX', (0,0), (-1,-1), 1.0, colors.HexColor("#CBD5E1")),
-        ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor("#E2E8F0")),
-        ('TOPPADDING', (0,0), (-1,-1), 3.5),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 3.5),
-        ('LEFTPADDING', (0,0), (-1,-1), 12),
-        ('RIGHTPADDING', (0,0), (-1,-1), 12),
+        ('LINEABOVE', (0,0), (-1,0), 1.2, colors.black),
+        ('LINEBELOW', (0,-1), (-1,-1), 1.2, colors.black),
+        ('LINEBELOW', (0,0), (-1,0), 0.6, colors.black),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('TOPPADDING', (0,0), (-1,-1), 3.0),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 3.0),
+        ('LEFTPADDING', (0,0), (-1,-1), 8),
+        ('RIGHTPADDING', (0,0), (-1,-1), 8),
     ]))
     story.append(t_meta)
-    story.append(Spacer(1, 25))
+    story.append(Spacer(1, 22))
 
-    decl_style = ParagraphStyle("DeclStyle", fontName=FONT_REGULAR, fontSize=7.5, leading=10.5, textColor=colors.HexColor("#64748B"), alignment=TA_CENTER)
+    decl_style = ParagraphStyle("DeclStyle", fontName=FONT_REGULAR, fontSize=7.5, leading=10.5, textColor=colors.black, alignment=TA_CENTER)
     story.append(Paragraph("This project report is submitted in partial fulfillment of the academic curriculum of the B.Tech program at the Indian Institute of Technology Patna. All algorithms, empirical evaluations, and source code are verified reproducible under deterministic random seeds [42, 100, 2026].", decl_style))
     story.append(PageBreak())
 
@@ -404,24 +464,24 @@ def build_report():
     # PAGE 2: PRELIMINARY PAGES (ABSTRACT, TOC, LIST OF FIGURES & TABLES)
     # =========================================================================
     story.append(PageMarker("PAGE 2: Abstract, TOC, List of Figures & Tables"))
-    story.append(Paragraph("<b>PRELIMINARY PAGES</b>", ParagraphStyle("PrelimHead", fontName=FONT_BOLD, fontSize=12, leading=14, textColor=colors.HexColor("#0A2540"), alignment=TA_CENTER)))
-    story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#D4AF37"), spaceBefore=3, spaceAfter=5))
+    story.append(Paragraph("<b>PRELIMINARY PAGES</b>", ParagraphStyle("PrelimHead", fontName=FONT_BOLD, fontSize=12, leading=14, textColor=colors.black, alignment=TA_CENTER)))
+    story.append(HRFlowable(width="100%", thickness=1.0, color=colors.black, spaceBefore=3, spaceAfter=5))
 
     story.append(Paragraph("<b>Abstract</b>", sec_heading))
     abstract_text = fmt(
         "Accurate State-of-Health (SOH) estimation for lithium-ion batteries is a fundamental prerequisite for the operational safety, life-cycle management, and warranty tracking of modern electric vehicles (EVs) and grid energy storage systems. However, battery degradation is governed by coupled electro-thermal degradation processes, exhibiting non-linear capacity fade, internal resistance growth, and capacity regeneration jumps following rest periods. Existing data-driven methodologies suffer from a fundamental trilemma: deep neural networks deliver low training error but act as opaque black boxes devoid of calibrated epistemic uncertainty; exact Gaussian Process Regression (GPR) offers formal Bayesian confidence bands but incurs prohibitive $O(N^3)$ computational scaling (~1,420 ms per inference) that violates the hard real-time deadlines of automotive Battery Management Systems (BMS); and unconstrained symbolic regression is fragile when fitting noisy global trends. In this investigation, we propose <b>WD-GPR-SR</b>, an interpretable and uncertainty-calibrated framework integrating an Additive Wide-and-Deep Sparse Gaussian Process with Uncertainty-Weighted Symbolic Regression. Evaluated under strict Leave-One-Cell-Out (LOCO) cross-validation across 8 battery cells from NASA Ames and CALCE datasets over deterministic seeds [42, 100, 2026], WD-GPR-SR achieves state-of-the-art accuracy: <b>0.992% RMSE</b> on NASA (a 24% error reduction over XGBoost) and <b>0.130% RMSE</b> on CALCE, alongside rigorously calibrated <b>98.8% to 100.0% PICP</b> coverage. Furthermore, when deployed on the NVIDIA Jetson Orin Nano edge platform using TensorRT FP16, WD-GPR-SR executes at <b>0.110 ms latency</b> and consumes only <b>1.479 mJ</b> per inference—demonstrating real-time ISO 26262 ASIL-D feasibility with a 99.8% execution margin."
     )
     story.append(Paragraph(abstract_text, body_style))
-    story.append(Paragraph("<b>Keywords:</b> Lithium-Ion Battery, State-of-Health (SOH), Sparse Gaussian Process Regression, Uncertainty-Weighted Symbolic Regression, Explainable AI (XAI), NVIDIA Jetson Orin Nano, ISO 26262 ASIL-D.", ParagraphStyle("KW", fontName=FONT_REGULAR, fontSize=7.2, leading=9.2, textColor=colors.HexColor("#1A365D"), spaceAfter=5)))
+    story.append(Paragraph("<b>Keywords:</b> Lithium-Ion Battery, State-of-Health (SOH), Sparse Gaussian Process Regression, Uncertainty-Weighted Symbolic Regression, Explainable AI (XAI), NVIDIA Jetson Orin Nano, ISO 26262 ASIL-D.", ParagraphStyle("KW", fontName=FONT_REGULAR, fontSize=7.2, leading=9.2, textColor=colors.black, spaceAfter=5)))
 
     story.append(section_divider())
 
-    # Table of Contents & Lists Grid
+    # Academic Booktabs TOC & Lists Table
     toc_data = [
         [Paragraph("<b>Chapter / Section Title</b>", table_header), Paragraph("<b>Page</b>", table_header), Paragraph("<b>List of Figures &amp; Tables</b>", table_header), Paragraph("<b>Page</b>", table_header)],
         [Paragraph("Chapter 1: Introduction", table_cell_left), Paragraph("3", table_cell), Paragraph("Figure 3.1: Raw Cycling Profiles &amp; SOH Trajectories", table_cell_left), Paragraph("5", table_cell)],
-        [Paragraph("&nbsp;&nbsp;1.1 Background and Motivation &bull; 1.2 Problem Statement", table_cell_left), Paragraph("3", table_cell), Paragraph("Figure 3.2: Incremental Capacity Curve Evolution", table_cell_left), Paragraph("6", table_cell)],
-        [Paragraph("&nbsp;&nbsp;1.3 Objectives &bull; 1.4 Scope &bull; 1.5 Key Contributions", table_cell_left), Paragraph("3", table_cell), Paragraph("Figure 3.3: WD-GPR-SR Architecture Flowchart", table_cell_left), Paragraph("7", table_cell)],
+        [Paragraph("&nbsp;&nbsp;1.1 Background &bull; 1.2 Problem Statement &bull; 1.3 Objectives", table_cell_left), Paragraph("3", table_cell), Paragraph("Figure 3.2: Incremental Capacity Curve Evolution", table_cell_left), Paragraph("6", table_cell)],
+        [Paragraph("&nbsp;&nbsp;1.4 Scope of the Work &bull; 1.5 Key Contributions", table_cell_left), Paragraph("3", table_cell), Paragraph("Figure 3.3: WD-GPR-SR Architecture Flowchart", table_cell_left), Paragraph("7", table_cell)],
         [Paragraph("Chapter 2: Literature Review", table_cell_left), Paragraph("4", table_cell), Paragraph("Figure 4.1: Master Benchmark Evaluation (13 Baselines)", table_cell_left), Paragraph("9", table_cell)],
         [Paragraph("&nbsp;&nbsp;2.1 Existing Approaches &bull; 2.2 Research Gaps", table_cell_left), Paragraph("4", table_cell), Paragraph("Figure 4.2: SOH Predictions with 95% Confidence Band", table_cell_left), Paragraph("10", table_cell)],
         [Paragraph("Chapter 3: Proposed Methodology", table_cell_left), Paragraph("5-8", table_cell), Paragraph("Figure 4.3: SHAP Beeswarm &amp; ARD Feature Importance", table_cell_left), Paragraph("11", table_cell)],
@@ -438,14 +498,14 @@ def build_report():
     ]
     t_toc = Table(toc_data, colWidths=[200, 35, 270, 35])
     t_toc.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#0A2540")),
-        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor("#CBD5E1")),
+        ('LINEABOVE', (0,0), (-1,0), 1.2, colors.black),
+        ('LINEBELOW', (0,0), (-1,0), 0.8, colors.black),
+        ('LINEBELOW', (0,-1), (-1,-1), 1.2, colors.black),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('TOPPADDING', (0,0), (-1,-1), 2.0),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 2.0),
-        ('LEFTPADDING', (0,0), (-1,-1), 5),
-        ('RIGHTPADDING', (0,0), (-1,-1), 5),
-        ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.HexColor("#F8FAFC")]),
+        ('TOPPADDING', (0,0), (-1,-1), 1.8),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 1.8),
+        ('LEFTPADDING', (0,0), (-1,-1), 4),
+        ('RIGHTPADDING', (0,0), (-1,-1), 4),
     ]))
     story.append(t_toc)
     story.append(PageBreak())
@@ -529,14 +589,13 @@ def build_report():
     ]
     t_tax = Table(tax_data, colWidths=[115, 85, 68, 85, 55, 62, 70])
     t_tax.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#0A2540")),
-        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor("#CBD5E1")),
+        ('LINEABOVE', (0,0), (-1,0), 1.2, colors.black),
+        ('LINEBELOW', (0,0), (-1,0), 0.8, colors.black),
+        ('LINEBELOW', (0,-1), (-1,-1), 1.2, colors.black),
+        ('LINEBELOW', (0,1), (-1,-2), 0.3, colors.HexColor("#D1D5DB")),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
         ('TOPPADDING', (0,0), (-1,-1), 2.2),
         ('BOTTOMPADDING', (0,0), (-1,-1), 2.2),
-        ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.HexColor("#F8FAFC")]),
-        ('BACKGROUND', (0,7), (-1,7), colors.HexColor("#FEF3C7")),
-        ('TEXTCOLOR', (0,7), (-1,7), colors.HexColor("#92400E")),
     ]))
     story.append(t_tax)
     story.append(Spacer(1, 4))
@@ -564,7 +623,7 @@ def build_report():
 
     story.append(Paragraph("3.2 Data Preprocessing and Signal Conditioning", sec_heading))
     p3_2 = fmt(
-        "Raw cycling records contain sensor glitches, partial cycles, and high-frequency measurement noise. A 4-stage data pipeline was implemented: (1) <i>Cycle Segmentation:</i> Programmatic identification of charge, discharge, and impedance measurement phases based on current polarity ($I &gt; 0.01$ A for charge, $I &lt; -0.01$ A for discharge); (2) <i>Outlier Filtering:</i> Removal of corrupted cycles exhibiting unphysical capacity spikes ($|\\Delta Q| &gt; 0.15$ Ah between adjacent cycles) or sensor dropout; (3) <i>Equidistant Voltage Resampling:</i> Interpolating charge profiles onto a uniform 0.005 V grid to enable numerical derivative computation; and (4) <i>Savitzky-Golay Filtering:</i> Applying a 2nd-order polynomial smoothing filter (window length 21) to suppress numerical differentiation noise prior to Incremental Capacity extraction."
+        "Raw cycling records contain sensor glitches, partial cycles, and high-frequency measurement noise. A 4-stage data pipeline was implemented: (1) <i>Cycle Segmentation:</i> Programmatic identification of charge, discharge, and impedance measurement phases based on current polarity ($I > 0.01$ A for charge, $I < -0.01$ A for discharge); (2) <i>Outlier Filtering:</i> Removal of corrupted cycles exhibiting unphysical capacity spikes ($|\\Delta Q| > 0.15$ Ah between adjacent cycles) or sensor dropout; (3) <i>Equidistant Voltage Resampling:</i> Interpolating charge profiles onto a uniform 0.005 V grid to enable numerical derivative computation; and (4) <i>Savitzky-Golay Filtering:</i> Applying a 2nd-order polynomial smoothing filter (window length 21) to suppress numerical differentiation noise prior to Incremental Capacity extraction."
     )
     story.append(Paragraph(p3_2, body_style))
 
@@ -588,16 +647,18 @@ def build_report():
     ]
     t_loco = Table(loco_data, colWidths=[45, 45, 55, 145, 120, 45, 85])
     t_loco.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#0A2540")),
-        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor("#CBD5E1")),
+        ('LINEABOVE', (0,0), (-1,0), 1.2, colors.black),
+        ('LINEBELOW', (0,0), (-1,0), 0.8, colors.black),
+        ('LINEBELOW', (0,-1), (-1,-1), 1.2, colors.black),
+        ('LINEBELOW', (0,1), (-1,-2), 0.3, colors.HexColor("#D1D5DB")),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('TOPPADDING', (0,0), (-1,-1), 1.6),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 1.6),
-        ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.HexColor("#F8FAFC")]),
+        ('TOPPADDING', (0,0), (-1,-1), 1.8),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 1.8),
     ]))
     story.append(t_loco)
     story.append(Spacer(1, 3))
 
+    # Embedded Figure 3.1 (Retains original plot colors)
     img_f31 = BASE_DIR / "results" / "figures" / "capacity_soh_trajectories.png"
     if img_f31.exists():
         story.append(Image(str(img_f31), width=510, height=135))
@@ -637,18 +698,18 @@ def build_report():
     ]
     t_hi = Table(hi_data, colWidths=[40, 50, 260, 50, 70, 70])
     t_hi.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#0A2540")),
-        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor("#CBD5E1")),
+        ('LINEABOVE', (0,0), (-1,0), 1.2, colors.black),
+        ('LINEBELOW', (0,0), (-1,0), 0.8, colors.black),
+        ('LINEBELOW', (0,-1), (-1,-1), 1.2, colors.black),
+        ('LINEBELOW', (0,1), (-1,-2), 0.3, colors.HexColor("#D1D5DB")),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
         ('TOPPADDING', (0,0), (-1,-1), 1.6),
         ('BOTTOMPADDING', (0,0), (-1,-1), 1.6),
-        ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.HexColor("#F8FAFC")]),
-        ('BACKGROUND', (0,1), (-1,1), colors.HexColor("#ECFDF5")),
-        ('BACKGROUND', (0,8), (-1,8), colors.HexColor("#ECFDF5")),
     ]))
     story.append(t_hi)
     story.append(Spacer(1, 4))
 
+    # Embedded Figure 3.2 (Retains original plot colors)
     img_f32 = BASE_DIR / "results" / "figures" / "ic_curve_evolution_b0005.png"
     if img_f32.exists():
         story.append(Image(str(img_f32), width=510, height=138))
@@ -672,6 +733,7 @@ def build_report():
     )
     story.append(Paragraph(p3_7, body_style))
 
+    # Embedded Equation 3.1 & 3.2 (Crisp vector equations)
     eq1_path = BASE_DIR / "results" / "report_assets" / "report_eq_1_composite.png"
     if eq1_path.exists():
         story.append(Image(str(eq1_path), width=480, height=44))
@@ -688,6 +750,7 @@ def build_report():
     )
     story.append(Paragraph(p3_8, body_style))
 
+    # Embedded Equation 3.3 & 3.4
     eq4_path = BASE_DIR / "results" / "report_assets" / "report_eq_4_elbo.png"
     if eq4_path.exists():
         story.append(Image(str(eq4_path), width=480, height=52))
@@ -698,6 +761,7 @@ def build_report():
     )
     story.append(Paragraph(p3_8b, body_style))
 
+    # Embedded Figure 3.3 (Retains original architecture flowchart colors)
     img_f33 = BASE_DIR / "results" / "poster_assets" / "architecture_flowchart.png"
     if img_f33.exists():
         story.append(Image(str(img_f33), width=510, height=155))
@@ -715,6 +779,7 @@ def build_report():
     )
     story.append(Paragraph(p3_9, body_style))
 
+    # Embedded Equation 3.5
     eq5_path = BASE_DIR / "results" / "report_assets" / "report_eq_5_sr.png"
     if eq5_path.exists():
         story.append(Image(str(eq5_path), width=480, height=44))
@@ -726,6 +791,7 @@ def build_report():
     )
     story.append(Paragraph(p3_10, body_style))
 
+    # Embedded Equation 3.6
     eq6_path = BASE_DIR / "results" / "report_assets" / "report_eq_6_bound.png"
     if eq6_path.exists():
         story.append(Image(str(eq6_path), width=480, height=40))
@@ -749,13 +815,14 @@ def build_report():
     ]
     t_algo = Table(algo_box_data, colWidths=[540])
     t_algo.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#0A2540")),
-        ('BACKGROUND', (0,1), (-1,1), colors.HexColor("#F8FAFC")),
-        ('BOX', (0,0), (-1,-1), 1.0, colors.HexColor("#0A2540")),
+        ('LINEABOVE', (0,0), (-1,0), 1.2, colors.black),
+        ('LINEBELOW', (0,0), (-1,0), 0.8, colors.black),
+        ('LINEBELOW', (0,-1), (-1,-1), 1.2, colors.black),
+        ('VALIGN', (0,0), (-1,-1), 'TOP'),
         ('TOPPADDING', (0,0), (-1,-1), 3.0),
         ('BOTTOMPADDING', (0,0), (-1,-1), 3.0),
-        ('LEFTPADDING', (0,0), (-1,-1), 8),
-        ('RIGHTPADDING', (0,0), (-1,-1), 8),
+        ('LEFTPADDING', (0,0), (-1,-1), 6),
+        ('RIGHTPADDING', (0,0), (-1,-1), 6),
     ]))
     story.append(t_algo)
     story.append(Spacer(1, 3))
@@ -770,12 +837,13 @@ def build_report():
     ]
     t_hp = Table(hp_data, colWidths=[80, 100, 90, 90, 100, 80])
     t_hp.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#0A2540")),
-        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor("#CBD5E1")),
+        ('LINEABOVE', (0,0), (-1,0), 1.2, colors.black),
+        ('LINEBELOW', (0,0), (-1,0), 0.8, colors.black),
+        ('LINEBELOW', (0,-1), (-1,-1), 1.2, colors.black),
+        ('LINEBELOW', (0,1), (-1,-2), 0.3, colors.HexColor("#D1D5DB")),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
         ('TOPPADDING', (0,0), (-1,-1), 1.8),
         ('BOTTOMPADDING', (0,0), (-1,-1), 1.8),
-        ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.HexColor("#F8FAFC")]),
     ]))
     story.append(t_hp)
     story.append(PageBreak())
@@ -826,18 +894,18 @@ def build_report():
     ]
     t_master = Table(master_data, colWidths=[95, 62, 60, 52, 62, 60, 52, 52, 45])
     t_master.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#0A2540")),
-        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor("#CBD5E1")),
+        ('LINEABOVE', (0,0), (-1,0), 1.2, colors.black),
+        ('LINEBELOW', (0,0), (-1,0), 0.8, colors.black),
+        ('LINEBELOW', (0,-1), (-1,-1), 1.2, colors.black),
+        ('LINEBELOW', (0,1), (-1,-2), 0.3, colors.HexColor("#D1D5DB")),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('TOPPADDING', (0,0), (-1,-1), 1.5),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 1.5),
-        ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.HexColor("#F8FAFC")]),
-        ('BACKGROUND', (0,14), (-1,14), colors.HexColor("#FEF3C7")),
-        ('TEXTCOLOR', (0,14), (-1,14), colors.HexColor("#92400E")),
+        ('TOPPADDING', (0,0), (-1,-1), 1.6),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 1.6),
     ]))
     story.append(t_master)
     story.append(Spacer(1, 3))
 
+    # Embedded Figure 4.1 (Retains original plot colors)
     img_f41 = BASE_DIR / "results" / "figures" / "baselines_benchmark_comparison.png"
     if img_f41.exists():
         story.append(Image(str(img_f41), width=510, height=128))
@@ -855,6 +923,7 @@ def build_report():
     )
     story.append(Paragraph(p4_3, body_style))
 
+    # Embedded Figure 4.2 (Retains original plot colors)
     img_f42 = BASE_DIR / "results" / "figures" / "soh_trajectory_proposed_predictions.png"
     if img_f42.exists():
         story.append(Image(str(img_f42), width=510, height=155))
@@ -878,14 +947,13 @@ def build_report():
     ]
     t_abl = Table(abl_data, colWidths=[110, 52, 52, 48, 52, 48, 45, 38, 95])
     t_abl.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#0A2540")),
-        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor("#CBD5E1")),
+        ('LINEABOVE', (0,0), (-1,0), 1.2, colors.black),
+        ('LINEBELOW', (0,0), (-1,0), 0.8, colors.black),
+        ('LINEBELOW', (0,-1), (-1,-1), 1.2, colors.black),
+        ('LINEBELOW', (0,1), (-1,-2), 0.3, colors.HexColor("#D1D5DB")),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
         ('TOPPADDING', (0,0), (-1,-1), 1.8),
         ('BOTTOMPADDING', (0,0), (-1,-1), 1.8),
-        ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.HexColor("#F8FAFC")]),
-        ('BACKGROUND', (0,6), (-1,6), colors.HexColor("#FEF3C7")),
-        ('TEXTCOLOR', (0,6), (-1,6), colors.HexColor("#92400E")),
     ]))
     story.append(t_abl)
     story.append(Spacer(1, 3))
@@ -906,6 +974,7 @@ def build_report():
     )
     story.append(Paragraph(p4_5, body_style))
 
+    # Embedded Figure 4.3 (Retains original plot colors)
     img_f43 = BASE_DIR / "results" / "figures" / "shap_summary.png"
     if img_f43.exists():
         story.append(Image(str(img_f43), width=510, height=135))
@@ -916,6 +985,7 @@ def build_report():
     )
     story.append(Paragraph(p4_5b, body_style))
 
+    # Embedded Figure 4.4 (Retains original plot colors)
     img_f44 = BASE_DIR / "results" / "figures" / "pdp_ice.png"
     if img_f44.exists():
         story.append(Image(str(img_f44), width=510, height=135))
@@ -952,18 +1022,18 @@ def build_report():
     ]
     t_jet = Table(jet_data, colWidths=[120, 100, 95, 125, 100])
     t_jet.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#0A2540")),
-        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor("#CBD5E1")),
+        ('LINEABOVE', (0,0), (-1,0), 1.2, colors.black),
+        ('LINEBELOW', (0,0), (-1,0), 0.8, colors.black),
+        ('LINEBELOW', (0,-1), (-1,-1), 1.2, colors.black),
+        ('LINEBELOW', (0,1), (-1,-2), 0.3, colors.HexColor("#D1D5DB")),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
         ('TOPPADDING', (0,0), (-1,-1), 1.8),
         ('BOTTOMPADDING', (0,0), (-1,-1), 1.8),
-        ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.HexColor("#F8FAFC")]),
-        ('BACKGROUND', (0,1), (-1,1), colors.HexColor("#ECFDF5")),
-        ('BACKGROUND', (0,6), (-1,6), colors.HexColor("#ECFDF5")),
     ]))
     story.append(t_jet)
     story.append(Spacer(1, 3))
 
+    # Embedded Figure 4.5 (Retains original plot colors)
     img_f45 = BASE_DIR / "results" / "figures" / "jetson_edge_deployment.png"
     if img_f45.exists():
         story.append(Image(str(img_f45), width=510, height=125))
@@ -1023,18 +1093,18 @@ def build_report():
     # =========================================================================
     story.append(PageMarker("PAGE 14: End Matter - References"))
     banner_ref = [[
-        Paragraph("<b>END MATTER</b>", ParagraphStyle("EB1", fontName=FONT_BOLD, fontSize=8.5, textColor=colors.HexColor("#D4AF37"), alignment=TA_LEFT)),
-        Paragraph("<b>REFERENCES</b>", ParagraphStyle("EB2", fontName=FONT_BOLD, fontSize=11.0, textColor=colors.white, alignment=TA_RIGHT))
+        Paragraph("<b>END MATTER</b>", ParagraphStyle("EB1", fontName=FONT_BOLD, fontSize=9.0, textColor=colors.black, alignment=TA_LEFT)),
+        Paragraph("<b>REFERENCES</b>", ParagraphStyle("EB2", fontName=FONT_BOLD, fontSize=10.5, textColor=colors.black, alignment=TA_RIGHT))
     ]]
     t_bref = Table(banner_ref, colWidths=[140, 400])
     t_bref.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#0A2540")),
+        ('LINEABOVE', (0,0), (-1,-1), 1.2, colors.black),
+        ('LINEBELOW', (0,0), (-1,-1), 1.2, colors.black),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('TOPPADDING', (0,0), (-1,-1), 4.5),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 4.5),
-        ('LEFTPADDING', (0,0), (-1,-1), 10),
-        ('RIGHTPADDING', (0,0), (-1,-1), 10),
-        ('LINEBELOW', (0,0), (-1,-1), 2, colors.HexColor("#D4AF37")),
+        ('TOPPADDING', (0,0), (-1,-1), 3.5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 3.5),
+        ('LEFTPADDING', (0,0), (-1,-1), 4),
+        ('RIGHTPADDING', (0,0), (-1,-1), 4),
     ]))
     story.append(t_bref)
     story.append(Spacer(1, 5))
@@ -1067,7 +1137,7 @@ def build_report():
         fontName=FONT_REGULAR,
         fontSize=6.8,
         leading=9.2,
-        textColor=colors.HexColor("#2D3748"),
+        textColor=colors.black,
         leftIndent=14,
         firstLineIndent=-14,
         spaceAfter=2.8,
@@ -1083,18 +1153,18 @@ def build_report():
     # =========================================================================
     story.append(PageMarker("PAGE 15: End Matter - Appendix"))
     banner_app = [[
-        Paragraph("<b>END MATTER</b>", ParagraphStyle("AB1", fontName=FONT_BOLD, fontSize=8.5, textColor=colors.HexColor("#D4AF37"), alignment=TA_LEFT)),
-        Paragraph("<b>APPENDIX</b>", ParagraphStyle("AB2", fontName=FONT_BOLD, fontSize=11.0, textColor=colors.white, alignment=TA_RIGHT))
+        Paragraph("<b>END MATTER</b>", ParagraphStyle("AB1", fontName=FONT_BOLD, fontSize=9.0, textColor=colors.black, alignment=TA_LEFT)),
+        Paragraph("<b>APPENDIX</b>", ParagraphStyle("AB2", fontName=FONT_BOLD, fontSize=10.5, textColor=colors.black, alignment=TA_RIGHT))
     ]]
     t_bapp = Table(banner_app, colWidths=[140, 400])
     t_bapp.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#0A2540")),
+        ('LINEABOVE', (0,0), (-1,-1), 1.2, colors.black),
+        ('LINEBELOW', (0,0), (-1,-1), 1.2, colors.black),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('TOPPADDING', (0,0), (-1,-1), 4.5),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 4.5),
-        ('LEFTPADDING', (0,0), (-1,-1), 10),
-        ('RIGHTPADDING', (0,0), (-1,-1), 10),
-        ('LINEBELOW', (0,0), (-1,-1), 2, colors.HexColor("#D4AF37")),
+        ('TOPPADDING', (0,0), (-1,-1), 3.5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 3.5),
+        ('LEFTPADDING', (0,0), (-1,-1), 4),
+        ('RIGHTPADDING', (0,0), (-1,-1), 4),
     ]))
     story.append(t_bapp)
     story.append(Spacer(1, 4))
@@ -1113,12 +1183,13 @@ def build_report():
     ]
     t_eqb = Table(eq_box_data, colWidths=[105, 305, 65, 65])
     t_eqb.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#0A2540")),
-        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor("#CBD5E1")),
+        ('LINEABOVE', (0,0), (-1,0), 1.2, colors.black),
+        ('LINEBELOW', (0,0), (-1,0), 0.8, colors.black),
+        ('LINEBELOW', (0,-1), (-1,-1), 1.2, colors.black),
+        ('LINEBELOW', (0,1), (-1,-2), 0.3, colors.HexColor("#D1D5DB")),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
         ('TOPPADDING', (0,0), (-1,-1), 2.0),
         ('BOTTOMPADDING', (0,0), (-1,-1), 2.0),
-        ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.HexColor("#F8FAFC")]),
     ]))
     story.append(t_eqb)
     story.append(Spacer(1, 4))
@@ -1141,21 +1212,21 @@ def build_report():
     )
     code_style = ParagraphStyle(
         "CCode",
-        fontName=FONT_REGULAR,
+        fontName="Courier",
         fontSize=6.5,
         leading=8.5,
-        textColor=colors.HexColor("#1A202C"),
-        leftIndent=10,
-        spaceAfter=4,
+        textColor=colors.black,
+        leftIndent=8,
+        spaceAfter=3,
     )
     t_code = Table([[Paragraph(c_code.replace("\n", "<br/>").replace(" ", "&nbsp;"), code_style)]], colWidths=[540])
     t_code.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#F1F5F9")),
-        ('BOX', (0,0), (-1,-1), 0.8, colors.HexColor("#94A3B8")),
-        ('TOPPADDING', (0,0), (-1,-1), 4),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 4),
-        ('LEFTPADDING', (0,0), (-1,-1), 8),
-        ('RIGHTPADDING', (0,0), (-1,-1), 8),
+        ('LINEABOVE', (0,0), (-1,-1), 0.8, colors.black),
+        ('LINEBELOW', (0,0), (-1,-1), 0.8, colors.black),
+        ('TOPPADDING', (0,0), (-1,-1), 3),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 3),
+        ('LEFTPADDING', (0,0), (-1,-1), 6),
+        ('RIGHTPADDING', (0,0), (-1,-1), 6),
     ]))
     story.append(t_code)
     story.append(Spacer(1, 3))
@@ -1177,13 +1248,13 @@ def build_report():
     ]
     t_chk = Table(chk_data, colWidths=[150, 270, 120])
     t_chk.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#0A2540")),
-        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor("#CBD5E1")),
+        ('LINEABOVE', (0,0), (-1,0), 1.2, colors.black),
+        ('LINEBELOW', (0,0), (-1,0), 0.8, colors.black),
+        ('LINEBELOW', (0,-1), (-1,-1), 1.2, colors.black),
+        ('LINEBELOW', (0,1), (-1,-2), 0.3, colors.HexColor("#D1D5DB")),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
         ('TOPPADDING', (0,0), (-1,-1), 1.8),
         ('BOTTOMPADDING', (0,0), (-1,-1), 1.8),
-        ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.HexColor("#F8FAFC")]),
-        ('BACKGROUND', (0,1), (-1,-1), colors.HexColor("#ECFDF5")),
     ]))
     story.append(t_chk)
 
