@@ -232,6 +232,10 @@ def generate_hi_extraction_grid():
 # 2. Architecture Flowchart (Clean Mathtext + TrueType Safe)
 # =====================================================================
 def generate_architecture_flowchart():
+    out_file = OUTPUT_DIR / "architecture_flowchart.png"
+    if out_file.exists():
+        print("[2/6] Preserving finalized draw.io Architecture Flowchart (No overwrite)...", flush=True)
+        return
     print("[2/6] Generating Architecture Flowchart...", flush=True)
     fig, ax = plt.subplots(figsize=(15, 8.5), dpi=300)
     fig.patch.set_facecolor("white")
@@ -640,68 +644,67 @@ def generate_math_equation_panels():
     render_single_eq(
         r"$k_{\mathrm{WD}}(\mathbf{x}, \mathbf{x}^\prime) = \sigma_{\mathrm{lin}}^2 (\mathbf{x}^T \mathbf{x}^\prime) + k_{\mathrm{Mat\acute{e}rn\text{-}5/2}}(\phi(\mathbf{x}), \phi(\mathbf{x}^\prime)) + \sigma_{\mathrm{RBF}}^2 k_{\mathrm{RBF}}(\mathbf{x}, \mathbf{x}^\prime)$",
         "poster_eq_composite_kernel.png",
-        figsize=(11.5, 1.3), font_size=14.5, text_color="#0A2540", bg_color="#F8FAFC", border_color="#2563EB"
+        figsize=(11.5, 1.3), font_size=14.5, text_color="#000000", bg_color="#FFFFFF", border_color="#9CA3AF"
     )
 
     # 2. Sparse Variational ELBO Objective
     render_single_eq(
         r"$\mathcal{L}_{\mathrm{ELBO}}(q) = \sum_{i=1}^N \mathrm{E}_{q(f_i)} \left[\log p(y_i \mid f_i)\right] - \mathrm{KL}( q(\mathbf{u}) \parallel p(\mathbf{u}) ), \quad M=64\ \mathrm{Inducing\ Points}$",
         "poster_eq_elbo.png",
-        figsize=(11.5, 1.2), font_size=14.5, text_color="#065F46", bg_color="#ECFDF5", border_color="#059669"
+        figsize=(11.5, 1.2), font_size=14.5, text_color="#000000", bg_color="#FFFFFF", border_color="#9CA3AF"
     )
 
     # 3. Uncertainty-Weighted Symbolic Regression Loss
     render_single_eq(
         r"$\mathcal{L}_{\mathrm{SR}}(g) = \frac{1}{\sum_{i=1}^N w_i} \sum_{i=1}^N w_i (y_i - \mu_{\mathrm{GP}}(\mathbf{x}_i) - g(\mathbf{x}_i))^2 + \lambda \cdot \mathcal{C}(g), \quad w_i = \frac{1}{\sigma_{\mathrm{GP}}^2(\mathbf{x}_i) + \epsilon}$",
         "poster_eq_uw_sr.png",
-        figsize=(11.5, 1.3), font_size=14.0, text_color="#991B1B", bg_color="#FEF2F2", border_color=COLOR_CRIMSON
+        figsize=(11.5, 1.3), font_size=14.0, text_color="#000000", bg_color="#FFFFFF", border_color="#9CA3AF"
     )
 
     # 4. Guaranteed Bounded Posterior Prediction
     render_single_eq(
         r"$\hat{y}(\mathbf{x}) = \mu_{\mathrm{GP}}(\mathbf{x}) + \mathrm{clip}(\hat{g}(\mathbf{x}),\, \pm 3\sigma_{\mathrm{GP}}(\mathbf{x})), \qquad \mathrm{CI}_{95\%} = [\hat{y}(\mathbf{x}) \pm 1.96 \sigma_{\mathrm{GP}}(\mathbf{x})]$",
         "poster_eq_posterior_bound.png",
-        figsize=(11.5, 1.2), font_size=14.5, text_color="#92400E", bg_color="#FEF3C7", border_color=COLOR_GOLD
+        figsize=(11.5, 1.2), font_size=14.5, text_color="#000000", bg_color="#FFFFFF", border_color="#9CA3AF"
     )
 
     # 5. Discovered Physics Residual Formula
     render_single_eq(
         r"$\hat{g}(\mathbf{x}) = 0.042 \cdot \frac{\Delta T_{\mathrm{dis}}}{\sqrt{t_{\mathrm{CC}}}} - 0.015 \cdot \left(V_{\mathrm{peak}} - 3.92\right)$",
         "poster_eq_discovered_residual.png",
-        figsize=(11.5, 1.1), font_size=15, text_color="#0A2540", bg_color="#FFFFFF", border_color="#94A3B8"
+        figsize=(11.5, 1.1), font_size=15, text_color="#000000", bg_color="#FFFFFF", border_color="#9CA3AF"
     )
 
 
 def generate_callout_panel():
     """
-    Renders the Golden Callout Box with fully rendered LaTeX math mode
-    ($w_i = \\frac{1}{\\sigma_i^2 + \\epsilon}$ and $\\pm 3\\sigma_{\\mathrm{GP}}$)
-    to guarantee authentic mathematical symbols in the PDF.
+    Renders the Callout Box with LaTeX math mode in clean grayscale
+    matching the academic report aesthetic.
     """
-    print("[7/7] Rendering Golden Callout Panel with LaTeX Math...", flush=True)
+    print("[7/7] Rendering Grayscale Callout Panel with LaTeX Math...", flush=True)
     fig, ax = plt.subplots(figsize=(11.5, 1.45), dpi=300)
-    fig.patch.set_facecolor("#FEF3C7")
-    ax.set_facecolor("#FEF3C7")
+    fig.patch.set_facecolor("#F9FAFB")
+    ax.set_facecolor("#F9FAFB")
     ax.axis("off")
 
     rect = patches.FancyBboxPatch((0.005, 0.05), 0.99, 0.90, boxstyle="round,pad=0.03,rounding_size=0.04",
-                                  facecolor="#FEF3C7", edgecolor=COLOR_GOLD, linewidth=2.0,
+                                  facecolor="#F9FAFB", edgecolor="#4B5563", linewidth=1.8,
                                   transform=ax.transAxes, zorder=1)
     ax.add_patch(rect)
 
     ax.text(0.03, 0.74, "Key Innovation: Epistemic Uncertainty Guides Symbolic Discovery",
-            fontsize=11.5, fontweight="bold", color="#92400E", transform=ax.transAxes, zorder=2)
+            fontsize=11.5, fontweight="bold", color="#000000", transform=ax.transAxes, zorder=2)
 
     ax.text(0.03, 0.49, r"Instead of fitting noisy uncalibrated residuals, the Symbolic Regressor applies inverse-variance",
-            fontsize=9.8, color="#1E293B", transform=ax.transAxes, zorder=2)
+            fontsize=9.8, color="#1F2937", transform=ax.transAxes, zorder=2)
     ax.text(0.03, 0.28, r"sample weights $w_i = \frac{1}{\sigma_i^2 + \epsilon}$, focusing genetic Pareto search on high-confidence regions",
-            fontsize=9.8, color="#1E293B", transform=ax.transAxes, zorder=2)
+            fontsize=9.8, color="#1F2937", transform=ax.transAxes, zorder=2)
     ax.text(0.03, 0.08, r"while safely bounding residual corrections to $\pm 3\sigma_{\mathrm{GP}}$.",
-            fontsize=9.8, color="#1E293B", transform=ax.transAxes, zorder=2)
+            fontsize=9.8, color="#1F2937", transform=ax.transAxes, zorder=2)
 
     plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
     out_p = OUTPUT_DIR / "poster_callout_epistemic_uw_sr.png"
-    plt.savefig(out_p, dpi=300, facecolor="#FEF3C7", bbox_inches="tight")
+    plt.savefig(out_p, dpi=300, facecolor="#F9FAFB", bbox_inches="tight")
     plt.close()
     print("  [OK] Saved poster_callout_epistemic_uw_sr.png", flush=True)
 

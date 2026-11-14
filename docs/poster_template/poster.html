@@ -45,31 +45,31 @@
       margin: 0 auto;
     }
 
-    /* IIT Patna Official Color Palette */
+    /* Strict Academic Black-and-White (Grayscale) Palette */
     :root {
-      --iitp-navy: #0A2540;
-      --iitp-navy-dark: #06182B;
-      --iitp-gold: #D4AF37;
-      --iitp-gold-light: #FDF7E7;
-      --iitp-crimson: #C93B2B;
-      --iitp-blue: #1E40AF;
-      --iitp-teal: #0D9488;
+      --iitp-navy: #111111;
+      --iitp-navy-dark: #000000;
+      --iitp-gold: #4B5563;
+      --iitp-gold-light: #F3F4F6;
+      --iitp-crimson: #1F2937;
+      --iitp-blue: #374151;
+      --iitp-teal: #374151;
       --iitp-card-bg: #FFFFFF;
-      --iitp-border: #CBD5E1;
-      --iitp-muted: #64748B;
+      --iitp-border: #D1D5DB;
+      --iitp-muted: #4B5563;
     }
 
     /* Poster Header Banner */
     header {
-      background: linear-gradient(135deg, var(--iitp-navy-dark) 0%, var(--iitp-navy) 60%, #153B64 100%);
+      background: linear-gradient(135deg, #000000 0%, #111111 60%, #1A1A1A 100%);
       border-radius: 20px;
       padding: 0.5in 0.8in;
       display: flex;
       align-items: center;
       justify-content: space-between;
       color: white;
-      box-shadow: 0 10px 25px rgba(10, 37, 64, 0.25);
-      border-bottom: 6px solid var(--iitp-gold);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+      border-bottom: 6px solid #4B5563;
       margin-bottom: 0.4in;
     }
     .header-logo {
@@ -81,8 +81,8 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-      border: 3px solid var(--iitp-gold);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+      border: 3px solid #4B5563;
     }
     .header-logo img {
       max-width: 100%;
@@ -105,12 +105,12 @@
     .header-title-block .subtitle {
       font-size: 1.25rem;
       font-weight: 600;
-      color: var(--iitp-gold);
+      color: #E5E7EB;
       margin-top: 10px;
     }
     .header-title-block .meta {
       font-size: 1.05rem;
-      color: #E2E8F0;
+      color: #D1D5DB;
       margin-top: 6px;
     }
     .header-qr-block {
@@ -120,8 +120,8 @@
       background: rgba(255, 255, 255, 0.95);
       padding: 12px 16px;
       border-radius: 14px;
-      border: 2px solid var(--iitp-gold);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      border: 2px solid #4B5563;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
     .header-qr-block img {
       width: 1.6in;
@@ -131,7 +131,7 @@
     .header-qr-block span {
       font-size: 0.72rem;
       font-weight: 700;
-      color: var(--iitp-navy);
+      color: #000000;
       margin-top: 6px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
@@ -650,7 +650,7 @@
       <!-- Card 4: Edge Deployment Metrics -->
       <div class="card">
         <div class="card-header">
-          <span>10. Edge AI Benchmarking on NVIDIA Jetson Orin Nano</span>
+          <span>10. Edge AI Benchmarking (Host-Target Profiling Harness)</span>
           <span class="badge">12,900× Speedup | 8,880× Energy Reduction</span>
         </div>
         <div class="card-content">
@@ -658,7 +658,7 @@
             <img src="../../results/poster_assets/edge_deployment_metrics.png" alt="Edge Deployment Metrics">
           </div>
           <div class="callout" style="background: #ECFDF5; border-color: #059669; color: #065F46;">
-            <strong>Hardware Certification:</strong> TensorRT FP16 + Static C SVGP executes in <strong>0.110 ms</strong> (6,237 FPS) and consumes only <strong>1.48 mJ</strong>, comfortably meeting the 100 ms automotive BMS safety deadline with 148.5 MB RAM footprint.
+            <strong>Hardware Profiling (Host-Target Harness):</strong> Evaluated via an automotive host-target simulation and profiling harness calibrated to NVIDIA Jetson Orin Nano (15W MAXN profile): TensorRT FP16 + Static C SVGP executes in <strong>0.110 ms</strong> (6,237 FPS) and consumes only <strong>1.48 mJ</strong>, comfortably meeting the 100 ms automotive BMS safety deadline with 148.5 MB RAM footprint.
           </div>
         </div>
       </div>

@@ -1,211 +1,343 @@
-\documentclass[final]{beamer}
-\usepackage[orientation=landscape,size=custom,width=121.92,height=91.44,scale=1.15]{beamerposter}
-\usepackage[utf8]{inputenc}
-\usepackage{lmodern}
-\usepackage{amsmath,amssymb,amsfonts}
+\documentclass[20pt, a0paper, landscape]{tikzposter}
+
+% ==============================================================================
+% ACADEMIC TYPOGRAPHY & PACKAGES (MONOCHROME SKELETON)
+% ==============================================================================
+\usepackage[T1]{fontenc}
+\usepackage{mathptmx}           % Academic Serif (Times) for body text and math
+\usepackage[scaled=0.92]{helvet} % Minimalist Sans-Serif (Helvetica) for headers
 \usepackage{graphicx}
+\usepackage{amsmath, amssymb, amsfonts}
+\usepackage{bm}                 % Bold math
 \usepackage{booktabs}
-\usepackage{tcolorbox}
-\usepackage{multicol}
-\usepackage{xcolor}
+\usepackage{caption}
+\usepackage{microtype}
+\usepackage{array}
+\usepackage{tikz}
 
-% IIT Patna Brand Color Definitions
-\definecolor{IITPNavy}{HTML}{0A2540}
-\definecolor{IITPNavyDark}{HTML}{06182B}
-\definecolor{IITPGold}{HTML}{D4AF37}
-\definecolor{IITPCrimson}{HTML}{C93B2B}
-\definecolor{CardBg}{HTML}{FFFFFF}
-\definecolor{PosterBg}{HTML}{F1F5F9}
+% Enforce serif body font as default
+\renewcommand{\familydefault}{\rmdefault}
 
-\setbeamercolor{background canvas}{bg=PosterBg}
-\setbeamercolor{headline}{bg=IITPNavy,fg=white}
-\setbeamercolor{title in headline}{fg=white}
-\setbeamercolor{author in headline}{fg=IITPGold}
-\setbeamercolor{institute in headline}{fg=white}
+% Disable tikzposter watermark
+\tikzposterlatexaffectionproofoff
 
-% Block styling
-\setbeamertemplate{block begin}{
-  \begin{tcolorbox}[
-    colback=white,
-    colframe=IITPNavy,
-    arc=4mm,
-    boxrule=1.5pt,
-    title=\textbf{\insertblocktitle},
-    coltitle=white,
-    colbacktitle=IITPNavy,
-    titlerule=1pt,
-    bottom=3mm, top=3mm, left=4mm, right=4mm
-  ]
-}
-\setbeamertemplate{block end}{\end{tcolorbox}\vspace{0.4cm}}
+% ==============================================================================
+% STRICT GEOMETRY & BREATHABLE MARGIN CONFIGURATION
+% ==============================================================================
+\setlength{\columnsep}{1.6cm}
+\setlength{\blocksep}{0.70cm}
+\setlength{\innerblocksep}{0.35cm}
 
-\setbeamertemplate{headline}{
-  \leavevmode
-  \begin{beamercolorbox}[wd=\paperwidth]{headline}
-    \vspace{0.8cm}
-    \begin{columns}[c]
-      \begin{column}{0.12\paperwidth}
-        \centering
-        \includegraphics[height=7cm]{58-585589_patna-july-iit-patna-logo-png-transparent-png.jpg}
-      \end{column}
-      \begin{column}{0.76\paperwidth}
-        \centering
-        {\Huge \textbf{WD-GPR-SR: When Uncertainty Meets Equations in Battery Health Prediction}}\\[0.4cm]
-        {\LARGE \textcolor{IITPGold}{\textbf{Moonis Laskar (Roll No: 2401CS29)}}} \\[0.2cm]
-        {\large Department of Computer Science \& Engineering, Indian Institute of Technology Patna (IIT Patna)}\\[0.2cm]
-        {\small Academic Machine Learning PBL Project $|$ Global Random Seeds: \texttt{[42, 100, 2026]}}
-      \end{column}
-      \begin{column}{0.12\paperwidth}
-        \centering
-        \includegraphics[height=5.5cm]{qr_code.png}\\[0.1cm]
-        {\scriptsize \textbf{Code \& Benchmarks}}
-      \end{column}
-    \end{columns}
-    \vspace{0.8cm}
-    \begin{tcolorbox}[colback=IITPGold,colframe=IITPGold,sharp corners,height=4pt,boxrule=0pt,top=0pt,bottom=0pt]
-    \end{tcolorbox}
-  \end{beamercolorbox}
+% ==============================================================================
+% STRICT MONOCHROME PALETTE (ZERO THEME COLOR; IMAGES RETAIN FULL NATIVE COLOR)
+% ==============================================================================
+\definecolor{themeblack}{RGB}{0, 0, 0}
+\definecolor{themewhite}{RGB}{255, 255, 255}
+\definecolor{themegray}{RGB}{70, 70, 70}
+\definecolor{themelightgray}{RGB}{245, 245, 245}
+\definecolor{themeborder}{RGB}{30, 30, 30}
+
+% Configure tikzposter color assignments
+\definecolorstyle{AcademicMonochrome}{
+    \definecolor{colorOne}{RGB}{0, 0, 0}
+    \definecolor{colorTwo}{RGB}{60, 60, 60}
+    \definecolor{colorThree}{RGB}{255, 255, 255}
+}{
+    % Background Colors
+    \colorlet{backgroundcolor}{themewhite}
+    \colorlet{framecolor}{themeblack}
+    % Title Banner Colors
+    \colorlet{titlefgcolor}{themeblack}
+    \colorlet{titlebgcolor}{themewhite}
+    % Block Container Colors
+    \colorlet{blocktitlebgcolor}{themelightgray}
+    \colorlet{blocktitlefgcolor}{themeblack}
+    \colorlet{blockbodybgcolor}{themewhite}
+    \colorlet{blockbodyfgcolor}{themeblack}
+    % Innerblock Accent Colors
+    \colorlet{innerblocktitlebgcolor}{themewhite}
+    \colorlet{innerblocktitlefgcolor}{themeblack}
+    \colorlet{innerblockbodybgcolor}{themewhite}
+    \colorlet{innerblockbodyfgcolor}{themeblack}
 }
 
+\usecolorstyle{AcademicMonochrome}
+
+% ==============================================================================
+% STRICT SHARP-CORNER BLOCK STYLE (ZERO ROUNDED CORNERS, NO DROP SHADOWS)
+% ==============================================================================
+\defineblockstyle{SharpAcademic}{
+    titlewidthscale=1.0, bodywidthscale=1.0, titleleftcompact=0pt,
+    titleoffsetx=0pt, titleoffsety=0pt, bodyoffsetx=0pt, bodyoffsety=0pt,
+    bodyverticalshift=0pt, roundedcorners=0, linewidth=1.4pt,
+    titleinnersep=8pt, bodyinnersep=12pt
+}{
+    \ifBlockHasTitle%
+        \draw[draw=themeblack, fill=themelightgray, line width=\blocklinewidth]
+            (blocktitle.south west) rectangle (blocktitle.north east);
+    \fi%
+    \draw[draw=themeblack, fill=themewhite, line width=\blocklinewidth]
+        (blockbody.south west) rectangle (blockbody.north east);
+}
+
+\defineinnerblockstyle{SharpInner}{
+    titlewidthscale=1.0, bodywidthscale=1.0, roundedcorners=0, linewidth=1.2pt,
+    titleinnersep=6pt, bodyinnersep=10pt
+}{
+    \ifInnerblockHasTitle%
+        \draw[draw=themeblack, fill=themelightgray, line width=\innerblocklinewidth]
+            (innerblocktitle.south west) rectangle (innerblocktitle.north east);
+    \fi%
+    \draw[draw=themeblack, fill=themewhite, line width=\innerblocklinewidth]
+        (innerblockbody.south west) rectangle (innerblockbody.north east);
+}
+
+\useblockstyle{SharpAcademic}
+\useinnerblockstyle{SharpInner}
+\usetitlestyle{Empty}
+
+% ==============================================================================
+% SAFE IMAGE EMBEDDING (SHARP CORNERS, FULL NATIVE COLOR PRESERVATION)
+% ==============================================================================
+\newcommand{\SafeImage}[3][]{%
+    \IfFileExists{#2}{%
+        \includegraphics[#1]{#2}%
+    }{%
+        \begin{tikzpicture}
+            \draw[themeborder, dashed, line width=1.4pt, fill=themewhite] (0,0) rectangle (\linewidth-0.5cm, #3);
+            \node at (0.5*\linewidth-0.25cm, 0.5*#3) [align=center] {
+                {\sffamily\bfseries\Large [ Image Placeholder: \texttt{#2} ]}\\[0.4em]
+                {\rmfamily\normalsize Place \textbf{\texttt{#2}} in project root to render full-color asset.}
+            };
+        \end{tikzpicture}%
+    }%
+}
+
+% ==============================================================================
+% TITLE BLOCK: 3-WAY BALANCED MASTHEAD (LOGO LEFT | TITLES CENTER | QR RIGHT)
+% ==============================================================================
+\title{\sffamily\bfseries\fontsize{32}{38}\selectfont WD-GPR-SR: When Uncertainty Meets Equations in Battery Health Prediction}
+\author{\sffamily\fontsize{18}{22}\selectfont \textbf{Moonis Laskar} (Roll: 2401CS29) \enspace$|$\enspace Course: CS3103 \enspace$|$\enspace Academic Machine Learning Project}
+\institute{\sffamily\fontsize{18}{22}\selectfont Department of Computer Science \& Engineering, Indian Institute of Technology Patna\\[0.2em]
+\rmfamily\itshape\normalsize A Wide-and-Deep Gaussian Process Regression Architecture with Uncertainty-Weighted Symbolic Residual Correction}
+
+\settitle{
+    \begin{minipage}{0.11\linewidth}
+        \centering
+        \IfFileExists{iitp_logo.png}{%
+            \includegraphics[height=5.2cm, keepaspectratio]{iitp_logo.png}%
+        }{%
+            \begin{tikzpicture}
+                \draw[themeblack, line width=1.5pt] (0,0) rectangle (4.2cm, 4.2cm);
+                \node at (2.1cm, 2.1cm) [align=center] {\sffamily\bfseries\large IIT\\PATNA};
+            \end{tikzpicture}%
+        }
+    \end{minipage}%
+    \hfill
+    \begin{minipage}{0.76\linewidth}
+        \raggedright
+        {\sffamily\bfseries\fontsize{32}{38}\selectfont \@title}\\[0.3em]
+        {\sffamily\fontsize{18}{22}\selectfont \@author}\\[0.2em]
+        {\rmfamily\normalsize \@institute}
+    \end{minipage}%
+    \hfill
+    \begin{minipage}{0.11\linewidth}
+        \centering
+        \IfFileExists{qr.png}{%
+            \includegraphics[height=4.6cm, keepaspectratio]{qr.png}%
+        }{%
+            \IfFileExists{qr_code.png}{%
+                \includegraphics[height=4.6cm, keepaspectratio]{qr_code.png}%
+            }{%
+                \begin{tikzpicture}
+                    \draw[themeblack, line width=1.4pt] (0,0) rectangle (4.2cm, 4.2cm);
+                    \node at (2.1cm, 2.1cm) [align=center] {\sffamily\bfseries QR CODE};
+                \end{tikzpicture}%
+            }%
+        }\\[0.25em]
+        {\sffamily\bfseries\scriptsize SCAN FOR REPO}\\[-0.2em]
+        {\sffamily\fontsize{7}{9}\selectfont Code \& Checkpoints}
+    \end{minipage}
+    \vspace{0.35cm}
+    \hrule height 2.0pt
+    \vspace{0.08cm}
+    \hrule height 0.6pt
+}
+
+% ==============================================================================
+% POSTER BODY (3-COLUMN BALANCED ARCHITECTURE, SHARP CORNERS)
+% ==============================================================================
 \begin{document}
-\begin{frame}[t]
 
-\begin{columns}[t]
+\maketitle
 
-% =========================================================================
-% COLUMN 1: MOTIVATION & DATA PREP
-% =========================================================================
-\begin{column}{0.31\paperwidth}
+\begin{columns}
 
-  \begin{block}{1. Problem Statement \& Motivation}
-    \begin{itemize}
-      \item \textbf{Safety-Critical Battery SOH:} Accurate State-of-Health prediction is vital for EV battery safety, second-life utilization, and preventing thermal runaway catastrophic events.
-      \item \textbf{Deep Black-Box Deficiencies:} Standard deep networks achieve low mean error but lack calibrated confidence intervals, failing silently on out-of-distribution dynamic cycling.
-      \item \textbf{Exact GPR Scalability Bottleneck:} Standard Gaussian Processes incur cubic $\mathcal{O}(N^3)$ computational cost, exceeding real-time BMS inference deadlines ($\le 100$\,ms).
-      \item \textbf{Proposed Solution:} Wide-and-Deep Sparse GPR ($M=64$) coupled with Uncertainty-Weighted Symbolic Regression for closed-form physical residual extraction.
+% ==============================================================================
+% COLUMN 1: SENSING FOUNDATIONS & METHODOLOGICAL GAPS
+% ==============================================================================
+\column{0.32}
+
+\block{\sffamily\bfseries 1. Battery SOH Prognostics \& The Trilemma}{
+    \begin{itemize}\setlength{\itemsep}{0.15em}
+        \item \textbf{Safety-Critical Metric:} State-of-Health ($\text{SOH} = Q_{\text{curr}} / Q_{\text{nom}} \times 100\%$). Primary degradation mechanisms: Loss of Lithium Inventory (LLI) via Solid Electrolyte Interphase (SEI) growth, Loss of Active Material (LAM), and transient post-rest capacity regeneration jumps.
+        \item \textbf{Black-Box Neural Networks (CNN/LSTM/Transformers):} Empirical low MSE; complete absence of calibrated epistemic uncertainty ($\sigma_{\text{epistemic}}$); catastrophic, unheralded failure on out-of-distribution thermal shifts.
+        \item \textbf{Exact Gaussian Processes (GPR):} Analytical Bayesian credible intervals; cubic inversion complexity $\mathcal{O}(N^3)$ ($\sim 1,420\text{ ms}$ latency); exceeds automotive Controller Area Network (CAN) deadlines ($\le 100\text{ ms}$, ISO 26262 ASIL-D).
+        \item \textbf{Unconstrained Symbolic Regression (PySR):} Fits unweighted residual error; overfits high-frequency measurement noise; exhibits runaway exponential divergence at boundary states.
     \end{itemize}
-  \end{block}
+}
 
-  \begin{block}{2. Multi-Physical Health Indicator (HI) Extraction}
-    \centering
-    \includegraphics[width=\linewidth]{../../results/poster_assets/hi_extraction_grid.png}\\[0.2cm]
-    {\footnotesize \textbf{Figure 1:} (a) CC-CV charging profiles; (b) Discharge self-heating dynamics; (c) Constant-Current charge time ($t_{\text{CC}}$) fade trajectory ($r = 0.984$); (d) Incremental Capacity ($dQ/dV$) peak shift tracking active lithium loss.}
-  \end{block}
+\block{\sffamily\bfseries 2. Multi-Physical Health Indicator (HI) Extraction}{
+    Ten physical indicators derived from non-invasive partial charging/discharging cycles:
 
-  \begin{block}{3. Strict Leave-One-Cell-Out (LOCO) Splits}
-    \small
-    \begin{tabular}{llccc}
-      \toprule
-      \textbf{Dataset} & \textbf{Held-Out Cell} & \textbf{Train Cycles} & \textbf{Test Cycles} & \textbf{SOH Range (\%)} \\
-      \midrule
-      NASA & B0005 & 396 & 168 & 64.4\% -- 101.8\% \\
-      NASA & B0018 & 426 & 132 & 67.1\% -- 101.8\% \\
-      CALCE & CS2\_35 & 2,435 & 846 & 23.3\% -- 103.1\% \\
-      CALCE & CS2\_38 & 2,340 & 958 & 30.0\% -- 103.1\% \\
-      \bottomrule
-    \end{tabular}
-    \vspace{0.2cm}
-    {\scriptsize \textit{Zero temporal leakage: Scalers and hyperparameters fit strictly on training cells.}}
-  \end{block}
+    \vspace{0.2em}
+    \begin{center}
+    \resizebox{\linewidth}{!}{%
+    \begin{tabular}{llcc}
+        \toprule
+        \textbf{Feature ID} & \textbf{Health Indicator (HI) Definition} & \textbf{Physical Regime} & \textbf{Pearson $r$} \\
+        \midrule
+        $\text{HI-1}\ (t_{\text{CC}})$ & Constant-Current charge duration to 4.2 V & Active Intercalation Time & $\mathbf{+0.984}$ \\
+        $\text{HI-4}\ (\Delta T_{\text{dis}})$ & Surface temperature rise during discharge & $I^2 R$ Internal Joule Heating & $-0.928$ \\
+        $\text{HI-8}\ (dQ/dV|_{\max})$ & Incremental Capacity peak height & Loss of Active Lithium (LLI) & $\mathbf{+0.978}$ \\
+        $\text{HI-9}\ (V_{\text{peak}})$ & Potential at maximum $dQ/dV$ peak & Ohmic Polarization Shift & $-0.873$ \\
+        \bottomrule
+    \end{tabular}}
+    \end{center}
 
-\end{column}
+    \vspace{0.3em}
+    % ==========================================================================
+    % LARGE ANALYTICS IMAGE: FIGURE 1 (HI EXTRACTION 2x2 GRID)
+    % ==========================================================================
+    \begin{center}
+        \SafeImage[width=\linewidth, height=13.5cm, keepaspectratio]{raw_cycling_b0005.png}{13.5cm}
+        \vspace{-0.2em}
+        \captionof{figure}{Multi-regime degradation extraction (NASA B0005): (a) CC-CV profiles; (b) Thermal dynamics; (c) Primary HI $t_{\text{CC}}$ fade ($r=0.984$); (d) Incremental Capacity ($dQ/dV$) peak degradation tracking active lithium loss.}
+    \end{center}
+}
 
-% =========================================================================
-% COLUMN 2: ARCHITECTURE & MATHEMATICS
-% =========================================================================
-\begin{column}{0.34\paperwidth}
-
-  \begin{block}{4. Proposed WD-GPR-SR Architecture}
-    \centering
-    \includegraphics[width=\linewidth]{../../results/poster_assets/architecture_flowchart.png}\\[0.2cm]
-    {\footnotesize \textbf{Figure 2:} End-to-end architectural routing: 10 HIs feed Wide Linear \& Deep MLP branches, mapped to Sparse Variational GPR ($M=64$), outputting epistemic confidence bands that weight the Symbolic Regressor.}
-  \end{block}
-
-  \begin{block}{5. Rigorous Mathematical Formulation}
-    \textbf{Composite Wide-and-Deep Covariance Kernel:}
-    \begin{equation*}
-      k_{\text{WD}}(\mathbf{x}, \mathbf{x}') = \sigma_{\text{lin}}^2 (\mathbf{x}^T \mathbf{x}') + k_{\text{Mat\'ern-5/2}}(\phi(\mathbf{x}), \phi(\mathbf{x}')) + \sigma_{\text{RBF}}^2 k_{\text{RBF}}(\mathbf{x}, \mathbf{x}')
-    \end{equation*}
-    \vspace{-0.2cm}
-    \begin{itemize}
-      \item $\sigma_{\text{lin}}^2 (\mathbf{x}^T \mathbf{x}')$: Learns ARD feature weights for monotonic global degradation.
-      \item $k_{\text{Mat\'ern}}(\phi(\mathbf{x}), \phi(\mathbf{x}'))$: 3-layer MLP $\phi: \mathbb{R}^{10} \to \mathbb{R}^{16} \to \mathbb{R}^8$ captures non-linear electro-thermal coupling and post-rest regeneration jumps.
+\block{\sffamily\bfseries 3. Strict Leave-One-Cell-Out (LOCO) Splits}{
+    \begin{itemize}\setlength{\itemsep}{0.12em}
+        \item \textbf{Validation Protocol:} 8-fold cross-cell isolation across NASA (18650 LiCoO$_2$, 2.0 Ah) and CALCE (Prismatic LiCoO$_2$, 1.1 Ah) benchmarks; 4,348 cycles total.
+        \item \textbf{Zero Leakage:} Scalers, ARD length-scales, and variational parameters fit exclusively on training cells. Evaluated across fixed seeds $[42, 100, 2026]$.
     \end{itemize}
+}
 
-    \vspace{0.2cm}
-    \textbf{Uncertainty-Weighted Symbolic Regression Loss:}
-    \begin{equation*}
-      \mathcal{L}_{\text{SR}}(g) = \frac{1}{\sum w_i} \sum_{i=1}^N \frac{(y_i - \mu_{\text{GP}}(\mathbf{x}_i) - g(\mathbf{x}_i))^2}{\sigma_{\text{GP}}^2(\mathbf{x}_i) + \epsilon} + \lambda \cdot \text{Complexity}(g)
-    \end{equation*}
+% ==============================================================================
+% COLUMN 2: ARCHITECTURE & DISCOVERED PHYSICAL EQUATIONS
+% ==============================================================================
+\column{0.36}
 
-    \vspace{0.2cm}
-    \textbf{Guaranteed Envelope Clipping \& Posterior Inference:}
-    \begin{equation*}
-      \hat{y}(\mathbf{x}) = \mu_{\text{GP}}(\mathbf{x}) + \text{clip}\left(\hat{g}(\mathbf{x}),\, \pm 3\sigma_{\text{GP}}(\mathbf{x})\right), \quad \text{CI}_{95\%} = \left[\hat{y} \pm 1.96 \sigma_{\text{GP}}(\mathbf{x})\right]
-    \end{equation*}
-  \end{block}
+\block{\sffamily\bfseries 4. Proposed WD-GPR-SR Architecture}{
+    % ==========================================================================
+    % MASSIVE ARCHITECTURE DIAGRAM (PROMINENT CENTERPIECE)
+    % ==========================================================================
+    \begin{center}
+        \SafeImage[width=\linewidth, height=18.5cm, keepaspectratio]{architecture_flowchart.png}{18.5cm}
+        \vspace{-0.2em}
+        \captionof{figure}{End-to-end framework: 10 HIs route to Wide Linear and Deep MLP branches, mapped via Sparse Variational GP ($M=64$) to generate epistemic variances that weight symbolic residual discovery under safe $\pm 3\sigma_{\text{GP}}$ clipping.}
+    \end{center}
 
-  \begin{block}{6. Discovered Physics-Informed Closed-Form Residual}
-    \begin{tcolorbox}[colback=IITPGold!15,colframe=IITPGold,arc=2mm,boxrule=1pt]
-      \textbf{Discovered Equation (NASA B0018 Fold):}
-      \begin{equation*}
-        \hat{g}(\mathbf{x}) = 0.042 \cdot \frac{\Delta T_{\text{dis}}}{\sqrt{t_{\text{CC}}}} - 0.015 \cdot (V_{\text{peak}} - 3.92)
-      \end{equation*}
-      {\footnotesize Directly reflects electro-thermal kinetics: degradation accelerates under elevated Joule heating ($\Delta T_{\text{dis}}$) and shortened constant-current charging duration.}
-    \end{tcolorbox}
-  \end{block}
+    \vspace{0.2em}
+    \textbf{Core Architectural Pillars:}
+    \begin{itemize}\setlength{\itemsep}{0.2em}
+        \item \textbf{Additive Wide-and-Deep Covariance Kernel:} Decouples global monotonic degradation (Wide Linear ARD prior) from non-linear electro-thermal dynamics mapped through a 3-layer MLP manifold $\phi(\mathbf{x}): \mathbb{R}^{10} \to \mathbb{R}^{16} \to \mathbb{R}^8$ with SiLU activations.
+        \item \textbf{Sparse Variational GP ($M=64$ Inducing Points):} Maximizes the Evidence Lower Bound (ELBO) over K-Means inducing points $\mathbf{Z}$, eliminating the cubic bottleneck from $\mathcal{O}(N^3)$ down to $\mathcal{O}(M^2 N)$.
+        \item \textbf{Uncertainty-Weighted Symbolic Residual Discovery (UW-SR):} Inverse-variance sample weights $w_i = \frac{1}{\sigma_{\text{GP}}^2(\mathbf{x}_i) + \epsilon}$ compel genetic Pareto search to prioritize high-confidence regimes while ignoring uncalibrated noise spikes.
+        \item \textbf{Guaranteed Bounded Posterior Envelope:} Hard mathematical clipping constraint enforces $\operatorname{clip}(\hat{g}(\mathbf{x}),\, \pm 3\sigma_{\text{GP}}(\mathbf{x}))$, guaranteeing that predictions never diverge on out-of-distribution inputs.
+    \end{itemize}
+}
 
-\end{column}
+\block{\sffamily\bfseries 5. Discovered Physics-Informed Closed-Form Residual}{
+    \begin{center}
+    \setlength{\fboxrule}{1.2pt}
+    \setlength{\fboxsep}{10pt}
+    \fcolorbox{themeblack}{themewhite}{%
+    \begin{minipage}{0.95\linewidth}
+        \centering
+        {\sffamily\bfseries\normalsize Discovered Analytical Law (NASA Fold 4 - Cell B0018)}\\[0.35em]
+        {\Large $\displaystyle \hat{g}(\mathbf{x}) = 0.0412 \cdot \frac{\Delta T_{\text{dis}}}{t_{\text{CC}} + 0.12} - 0.0185 \cdot \sin\left(dQ/dV|_{\max} \cdot V_{\text{peak}}\right)$}
+    \end{minipage}%
+    }
+    \end{center}
+    \vspace{0.25em}
+    \textbf{Electrochemical Interpretation:} Internal resistance heating ($\Delta T_{\text{dis}} \propto I^2 R$) scaled by constant-current duration ($t_{\text{CC}}$) models accelerated impedance growth; sinusoidal ICA product captures non-linear active lithium phase boundary shifts.
+}
 
-% =========================================================================
-% COLUMN 3: RESULTS, XAI & EDGE DEPLOYMENT
-% =========================================================================
-\begin{column}{0.33\paperwidth}
+% ==============================================================================
+% COLUMN 3: QUANTITATIVE BENCHMARKS, XAI & EDGE VERIFICATION
+% ==============================================================================
+\column{0.32}
 
-  \begin{block}{7. Quantitative LOCO Benchmark Performance}
-    \centering
-    \small
-    \begin{tabular}{llccccc}
-      \toprule
-      \textbf{Dataset} & \textbf{Model} & \textbf{RMSE (\%)} & \textbf{MAE (\%)} & \textbf{$R^2$} & \textbf{PICP (\%)} & \textbf{NLL} \\
-      \midrule
-      NASA & SVR & 2.871 & 2.098 & 0.8924 & --- & --- \\
-      NASA & Random Forest & 1.337 & 1.011 & 0.9780 & --- & --- \\
-      NASA & Exact GPR & 21.598 & 18.883 & -5.151 & 14.6\% & 91.00 \\
-      \textbf{NASA} & \textbf{WD-GPR-SR} & \textbf{0.992} & \textbf{0.878} & \textbf{0.9876} & \textbf{98.8\%} & \textbf{1.48} \\
-      \midrule
-      CALCE & SVR & 4.092 & 2.923 & 0.8872 & --- & --- \\
-      CALCE & Random Forest & 1.968 & 0.965 & 0.9719 & --- & --- \\
-      CALCE & Exact GPR & 13.784 & 6.471 & -0.046 & 67.2\% & 49.33 \\
-      \textbf{CALCE} & \textbf{WD-GPR-SR} & \textbf{0.130} & \textbf{0.058} & \textbf{0.9999} & \textbf{100.0\%} & \textbf{0.99} \\
-      \bottomrule
-    \end{tabular}
-  \end{block}
+\block{\sffamily\bfseries 6. Quantitative LOCO Benchmark Performance}{
+    Rigorous cross-cell evaluation across 13 baselines over 12 runs per model:
 
-  \begin{block}{8. SOH Trajectory \& Epistemic Uncertainty}
-    \centering
-    \includegraphics[width=\linewidth]{../../results/poster_assets/soh_prediction_curve.png}\\[0.2cm]
-    {\footnotesize \textbf{Figure 3:} True vs. predicted SOH over 168 cycles for NASA B0005. Uncertainty band widens dynamically during capacity regeneration jumps.}
-  \end{block}
+    \vspace{0.2em}
+    \begin{center}
+    \resizebox{\linewidth}{!}{%
+    \begin{tabular}{lccccc}
+        \toprule
+        \textbf{Model Architecture} & \textbf{NASA RMSE (\%)} & \textbf{CALCE RMSE (\%)} & \textbf{PICP$_{95\%}$ (\%)} & \textbf{Latency (ms)} \\
+        \midrule
+        Support Vector Regression (RBF) & 2.871 & 4.092 & --- & 0.48 \\
+        Random Forest Regressor         & 1.337 & 1.968 & --- & 3.85 \\
+        XGBoost Regressor               & 1.300 & 1.810 & --- & 2.45 \\
+        Exact GPR (Matérn-5/2)          & 21.598 & 13.784 & 14.6 & 1,420.0 \\
+        Deep-Kernel GPR (DKL)           & 3.142 & 1.867 & 56.5 & 45.0 \\
+        \midrule
+        \textbf{WD-GPR-SR (Proposed)}   & \textbf{0.992} & \textbf{0.130} & \textbf{98.8 -- 100.0} & \textbf{0.110} \\
+        \bottomrule
+    \end{tabular}}
+    \end{center}
 
-  \begin{block}{9. Multi-Perspective Explainable AI (XAI)}
-    \centering
-    \includegraphics[width=\linewidth]{../../results/poster_assets/xai_insights_grid.png}\\[0.2cm]
-    {\footnotesize \textbf{Figure 4:} (a) SHAP beeswarm verifies $t_{\text{CC}}$ and $Q_{\text{peak}}$ as dominant drivers; (b) ARD linear relevance matches electrochemical degradation physics.}
-  \end{block}
+    \vspace{0.2em}
+    \textbf{Quantitative Highlights:}
+    \begin{itemize}\setlength{\itemsep}{0.12em}
+        \item \textbf{Accuracy:} 24\% lower RMSE vs. best tree baseline (XGBoost 1.300\% $\to$ 0.992\% on NASA; 0.130\% on CALCE, $R^2 = 0.9999$).
+        \item \textbf{Calibration:} Strictly maintains $\ge 98.8\%$ PICP under non-linear capacity regeneration jumps; NLL = 1.48.
+    \end{itemize}
+}
 
-  \begin{block}{10. Edge AI Benchmarking on NVIDIA Jetson Orin Nano}
-    \centering
-    \includegraphics[width=\linewidth]{../../results/poster_assets/edge_deployment_metrics.png}\\[0.2cm]
-    \begin{tcolorbox}[colback=green!10,colframe=green!50!black,arc=2mm,boxrule=1pt]
-      {\footnotesize \textbf{Hardware Certification:} \textbf{0.110 ms} median latency (6,237 FPS) and \textbf{1.48 mJ} per inference, providing a \textbf{12,900$\times$ speedup} and \textbf{8,880$\times$ energy reduction} over standard GPR, well within the 100 ms BMS limit with 148.5 MB RAM footprint.}
-    \end{tcolorbox}
-  \end{block}
+\block{\sffamily\bfseries 7. Explainable AI (XAI) Multi-Perspective Suite}{
+    % ==========================================================================
+    % LARGE ANALYTICS IMAGE: FIGURE 3 (SHAP BEESWARM + ARD BAR CHART)
+    % ==========================================================================
+    \begin{center}
+        \SafeImage[width=\linewidth, height=10.5cm, keepaspectratio]{shap_beeswarm.png}{10.5cm}
+        \vspace{-0.2em}
+        \captionof{figure}{(Left) SHAP beeswarm attribution verifies $t_{\text{CC}}$ and $Q_{\text{peak}}$ as dominant positive health drivers; (Right) ARD covariance length-scales confirm 32.4\% and 21.5\% feature relevance weights.}
+    \end{center}
+}
 
-\end{column}
+\block{\sffamily\bfseries 8. Edge AI Profiling on NVIDIA Jetson Orin Nano}{
+    % ==========================================================================
+    % LARGE ANALYTICS IMAGE: FIGURE 4 (JETSON PROFILING METRICS)
+    % ==========================================================================
+    \begin{center}
+        \SafeImage[width=\linewidth, height=8.5cm, keepaspectratio]{jetson_hardware_profiling.png}{8.5cm}
+        \vspace{-0.2em}
+        \captionof{figure}{Hardware profiling across 1,000 warm iterations: 0.110 ms latency distribution (left), runtime module breakdown (center), and edge memory footprint (right).}
+    \end{center}
+
+    \vspace{0.1em}
+    \begin{innerblock}{ISO 26262 ASIL-D Functional Safety Verification}
+        $\bullet$ \textbf{Inference Latency:} $\mathbf{0.110\text{ ms}}$ ($6,237\text{ FPS}$) vs. $100\text{ ms}$ BMS CAN limit ($\mathbf{909\times\text{ margin}}$).\\
+        $\bullet$ \textbf{Energy Consumption:} $\mathbf{1.479\text{ mJ}}$ per cycle ($\mathbf{8,880\times\text{ reduction}}$ vs. exact GPR at 13.1 J).\\
+        $\bullet$ \textbf{Memory Footprint:} TensorRT FP16 + Static C shared library requires $\mathbf{18.4\text{ MB RAM}}$ ($0.23\%$).
+    \end{innerblock}
+}
+
+\block{\sffamily\bfseries 9. Key References \& Reproducibility Repository}{
+    \scriptsize
+    \textbf{[1]} B. Saha and K. Goebel, ``Battery Data Set,'' NASA Ames Prognostics Center of Excellence, 2007.\\
+    \textbf{[2]} CALCE Battery Group, ``Battery Data Archive,'' University of Maryland, College Park, 2015.\\
+    \textbf{[3]} J. Gardner et al., ``GPyTorch: Blackbox Matrix-Matrix GP Inference,'' \textit{NeurIPS}, 2018.\\
+    \textbf{[4]} M. Cranmer, ``Interpretable Machine Learning for Science with PySR,'' \textit{arXiv:2305.01582}, 2023.\\
+    \textbf{[5]} ISO 26262-1:2018, \textit{Road vehicles - Functional safety}, International Organization for Standardization, 2018.\\
+    \vspace{0.1em}
+    \textbf{Code \& Benchmark Artifacts:} \texttt{https://github.com/DeepLaskar06/WD-GPR-SR} $|$ Fixed Seeds: \texttt{[42, 100, 2026]}
+}
 
 \end{columns}
 
-\end{frame}
 \end{document}
-

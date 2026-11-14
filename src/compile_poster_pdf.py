@@ -64,21 +64,22 @@ for reg_name, reg_path, bold_name, bold_path, ital_name, ital_path in ttf_candid
         except Exception as e:
             print(f"[WARN] Font registration note: {e}")
 
-# IIT Patna Theme Colors
-COLOR_NAVY_DARK = HexColor("#06182B")
-COLOR_NAVY = HexColor("#0A2540")
-COLOR_NAVY_LIGHT = HexColor("#153B64")
-COLOR_GOLD = HexColor("#D4AF37")
-COLOR_GOLD_BG = HexColor("#FEF3C7")
-COLOR_CRIMSON = HexColor("#C93B2B")
-COLOR_DARK = HexColor("#1E293B")
-COLOR_TEXT = HexColor("#334155")
-COLOR_MUTED = HexColor("#64748B")
-COLOR_BORDER = HexColor("#CBD5E1")
+# Strict Academic Black-and-White (Grayscale) Theme (Matching Report Aesthetic)
+COLOR_BLACK = HexColor("#000000")
+COLOR_DARK_HEADER = HexColor("#111111")
+COLOR_HEADER_INNER = HexColor("#1A1A1A")
+COLOR_CHARCOAL = HexColor("#1E293B")
+COLOR_TEXT = HexColor("#1F2937")
+COLOR_MUTED = HexColor("#4B5563")
+COLOR_LIGHT_MUTED = HexColor("#6B7280")
+COLOR_BORDER = HexColor("#D1D5DB")
+COLOR_BORDER_DARK = HexColor("#374151")
 COLOR_CARD_BG = HexColor("#FFFFFF")
-COLOR_PAGE_BG = HexColor("#F1F5F9")
-COLOR_SUCCESS = HexColor("#059669")
-COLOR_SUCCESS_BG = HexColor("#ECFDF5")
+COLOR_PAGE_BG = HexColor("#F8F9FA")
+COLOR_ROW_ALT = HexColor("#F9FAFB")
+COLOR_HIGHLIGHT_BG = HexColor("#E5E7EB")
+COLOR_HIGHLIGHT_TEXT = HexColor("#000000")
+COLOR_ACCENT_STRIP = HexColor("#4B5563")
 
 
 def get_writable_target_path():
@@ -118,23 +119,23 @@ def build_poster():
     usable_height = POSTER_HEIGHT - 2 * margin_y
 
     # =========================================================================
-    # HEADER BANNER
+    # HEADER BANNER (Academic Grayscale Theme)
     # =========================================================================
     header_height = 3.3 * inch
     header_y = POSTER_HEIGHT - margin_y - header_height
     header_width = usable_width
 
-    # Header Background
-    c.setFillColor(COLOR_NAVY_DARK)
+    # Header Background: Rich Dark Charcoal / Black with Fine Border
+    c.setFillColor(COLOR_DARK_HEADER)
     c.roundRect(margin_x, header_y, header_width, header_height, 16, fill=True, stroke=False)
-    c.setFillColor(COLOR_NAVY)
+    c.setFillColor(COLOR_HEADER_INNER)
     c.roundRect(margin_x + 2, header_y + 4, header_width - 4, header_height - 6, 14, fill=True, stroke=False)
     
-    # Gold Bottom Border
-    c.setFillColor(COLOR_GOLD)
-    c.rect(margin_x, header_y, header_width, 8, fill=True, stroke=False)
+    # Grayscale Bottom Border Rule
+    c.setFillColor(COLOR_BORDER_DARK)
+    c.rect(margin_x, header_y, header_width, 6, fill=True, stroke=False)
 
-    # Logo Left (IIT Patna Seal)
+    # Logo Left (IIT Patna Seal - Preserved in Full Color)
     logo_path = POSTER_ASSETS / "iitp_logo.png"
     if not logo_path.exists():
         logo_path = TEMPLATE_DIR / "58-585589_patna-july-iit-patna-logo-png-transparent-png.jpg"
@@ -143,26 +144,26 @@ def build_poster():
     logo_x = margin_x + 0.5 * inch
     logo_y = header_y + (header_height - logo_size) / 2
     
-    # White circular backing for logo
+    # White circular backing for logo with neat grayscale border
     c.setFillColor(HexColor("#FFFFFF"))
     c.circle(logo_x + logo_size / 2, logo_y + logo_size / 2, logo_size / 2 + 3, fill=True, stroke=False)
-    c.setStrokeColor(COLOR_GOLD)
-    c.setLineWidth(2.5)
+    c.setStrokeColor(COLOR_BORDER_DARK)
+    c.setLineWidth(2.0)
     c.circle(logo_x + logo_size / 2, logo_y + logo_size / 2, logo_size / 2 + 3, fill=False, stroke=True)
     if logo_path.exists():
         c.drawImage(str(logo_path), logo_x, logo_y, width=logo_size, height=logo_size, preserveAspectRatio=True, mask='auto')
 
-    # QR Code Right
+    # QR Code Right (Full Color)
     qr_path = POSTER_ASSETS / "qr_code.png"
     qr_box_w = 2.2 * inch
     qr_box_h = 2.6 * inch
     qr_x = margin_x + header_width - qr_box_w - 0.5 * inch
     qr_y = header_y + (header_height - qr_box_h) / 2
     
-    # White card for QR
+    # White card for QR with grayscale border
     c.setFillColor(HexColor("#FFFFFF"))
-    c.setStrokeColor(COLOR_GOLD)
-    c.setLineWidth(2.0)
+    c.setStrokeColor(COLOR_BORDER_DARK)
+    c.setLineWidth(1.8)
     c.roundRect(qr_x, qr_y, qr_box_w, qr_box_h, 10, fill=True, stroke=True)
     
     qr_img_size = 1.75 * inch
@@ -170,13 +171,13 @@ def build_poster():
         c.drawImage(str(qr_path), qr_x + (qr_box_w - qr_img_size) / 2, qr_y + 0.60 * inch,
                     width=qr_img_size, height=qr_img_size, preserveAspectRatio=True)
     c.setFont(FONT_BOLD, 10)
-    c.setFillColor(COLOR_NAVY)
+    c.setFillColor(COLOR_BLACK)
     c.drawCentredString(qr_x + qr_box_w / 2, qr_y + 0.38 * inch, "SCAN FOR CODE")
     c.setFont(FONT_REGULAR, 8)
     c.setFillColor(COLOR_MUTED)
     c.drawCentredString(qr_x + qr_box_w / 2, qr_y + 0.20 * inch, "GitHub / Reproducibility")
 
-    # Header Titles & Text
+    # Header Titles & Text (Academic High-Contrast Typography)
     title_center_x = margin_x + header_width / 2
     
     # Main Title
@@ -187,7 +188,7 @@ def build_poster():
     
     # Subtitle
     c.setFont(FONT_BOLD, 17)
-    c.setFillColor(COLOR_GOLD)
+    c.setFillColor(HexColor("#E5E7EB"))
     c.drawCentredString(title_center_x, header_y + 1.55 * inch,
                         "Wide-and-Deep Gaussian Process Regression with Uncertainty-Weighted Symbolic Residual Correction")
     
@@ -198,12 +199,12 @@ def build_poster():
                         "Author: Moonis Laskar (Roll No: 2401CS29)   |   Email: moonis_2401cs29@iitp.ac.in")
     
     c.setFont(FONT_REGULAR, 12)
-    c.setFillColor(HexColor("#E2E8F0"))
+    c.setFillColor(HexColor("#D1D5DB"))
     c.drawCentredString(title_center_x, header_y + 0.55 * inch,
                         "Department of Computer Science & Engineering, Indian Institute of Technology Patna (IIT Patna)")
 
     # =========================================================================
-    # FOOTER BAR
+    # FOOTER BAR (Academic Grayscale Theme)
     # =========================================================================
     footer_height = 0.65 * inch
     footer_y = margin_y
@@ -214,17 +215,17 @@ def build_poster():
     c.roundRect(margin_x, footer_y, header_width, footer_height, 8, fill=True, stroke=True)
 
     c.setFont(FONT_BOLD, 10.5)
-    c.setFillColor(COLOR_NAVY)
+    c.setFillColor(COLOR_BLACK)
     c.drawString(margin_x + 0.3 * inch, footer_y + 0.28 * inch,
                  "Indian Institute of Technology Patna (IIT Patna) - Department of Computer Science & Engineering")
     
     c.setFont(FONT_REGULAR, 9.5)
-    c.setFillColor(COLOR_TEXT)
+    c.setFillColor(COLOR_MUTED)
     c.drawString(margin_x + 0.3 * inch, footer_y + 0.12 * inch,
                  "Project Repository: https://github.com/DeepLaskar06/WD-GPR-SR  |  Deterministic Pipeline: PyTorch 2.5, GPyTorch, TensorRT FP16, PySR")
 
     c.setFont(FONT_BOLD, 10)
-    c.setFillColor(COLOR_SUCCESS)
+    c.setFillColor(COLOR_BLACK)
     c.drawRightString(margin_x + header_width - 0.3 * inch, footer_y + 0.22 * inch,
                       "BMS Feasibility: Certified (0.110 ms << 100 ms Safety Limit | 1.479 mJ/inference)")
 
@@ -242,7 +243,7 @@ def build_poster():
     col3_x = col2_x + col_width + gap_x
 
     def draw_card_frame(x, y, w, h, title_text, badge_text=""):
-        c.setFillColor(HexColor("#E2E8F0"))
+        c.setFillColor(HexColor("#E5E7EB"))
         c.roundRect(x + 2, y - 2, w, h, 10, fill=True, stroke=False)
         c.setFillColor(COLOR_CARD_BG)
         c.setStrokeColor(COLOR_BORDER)
@@ -250,11 +251,11 @@ def build_poster():
         c.roundRect(x, y, w, h, 10, fill=True, stroke=True)
         
         th = 0.42 * inch
-        c.setFillColor(COLOR_NAVY)
+        c.setFillColor(COLOR_DARK_HEADER)
         c.roundRect(x, y + h - th, w, th, 10, fill=True, stroke=False)
         c.rect(x, y + h - th, w, 10, fill=True, stroke=False)
         
-        c.setFillColor(COLOR_GOLD)
+        c.setFillColor(COLOR_ACCENT_STRIP)
         c.rect(x, y + h - th, 6, th, fill=True, stroke=False)
 
         c.setFont(FONT_BOLD, 12)
@@ -263,7 +264,7 @@ def build_poster():
 
         if badge_text:
             c.setFont(FONT_BOLD, 9)
-            c.setFillColor(COLOR_GOLD)
+            c.setFillColor(HexColor("#E5E7EB"))
             c.drawRightString(x + w - 14, y + h - th + 0.12 * inch, badge_text)
             
         return y + h - th
@@ -277,7 +278,8 @@ def build_poster():
                              "1. Abstract & Problem Statement", "Motivation & Paradigm")
 
     c.setFont(FONT_BOLD, 10.5)
-    c.setFillColor(COLOR_NAVY)
+    c.setFont(FONT_BOLD, 10.5)
+    c.setFillColor(COLOR_BLACK)
     ty = c1_top - 0.30 * inch
     c.drawString(col1_x + 16, ty, "- Abstract & Safety-Critical Battery Health:")
     c.setFont(FONT_REGULAR, 9.5)
@@ -290,7 +292,7 @@ def build_poster():
     c.drawString(col1_x + 24, ty, "degradation involves complex non-linear capacity fade and capacity regeneration jumps.")
 
     c.setFont(FONT_BOLD, 10.5)
-    c.setFillColor(COLOR_NAVY)
+    c.setFillColor(COLOR_BLACK)
     ty -= 0.28 * inch
     c.drawString(col1_x + 16, ty, "- The Accuracy-Interpretability-Uncertainty Dilemma:")
     c.setFont(FONT_REGULAR, 9.5)
@@ -305,7 +307,7 @@ def build_poster():
     c.drawString(col1_x + 24, ty, "   complexity (~1,420 ms per inference), severely violating automotive BMS limits (≤100 ms).")
 
     c.setFont(FONT_BOLD, 10.5)
-    c.setFillColor(COLOR_NAVY)
+    c.setFillColor(COLOR_BLACK)
     ty -= 0.28 * inch
     c.drawString(col1_x + 16, ty, "- Proposed Solution: WD-GPR-SR Framework:")
     c.setFont(FONT_REGULAR, 9.5)
@@ -317,19 +319,19 @@ def build_poster():
     ty -= 0.16 * inch
     c.drawString(col1_x + 24, ty, "variance weights guide Pareto genetic programming to discover transparent physics equations.")
 
-    # Callout Box with Rendered Math
+    # Callout Box with Rendered Math (Grayscale Theme)
     call_y = col1_card1_y + 0.25 * inch
     call_h = 1.35 * inch
     call_img = POSTER_ASSETS / "poster_callout_epistemic_uw_sr.png"
     if call_img.exists():
         c.drawImage(str(call_img), col1_x + 14, call_y, width=col_width - 28, height=call_h, preserveAspectRatio=True)
     else:
-        c.setFillColor(COLOR_GOLD_BG)
-        c.setStrokeColor(COLOR_GOLD)
+        c.setFillColor(COLOR_ROW_ALT)
+        c.setStrokeColor(COLOR_BORDER_DARK)
         c.setLineWidth(1.2)
         c.roundRect(col1_x + 14, call_y, col_width - 28, call_h, 6, fill=True, stroke=True)
         c.setFont(FONT_BOLD, 9.5)
-        c.setFillColor(HexColor("#92400E"))
+        c.setFillColor(COLOR_BLACK)
         c.drawString(col1_x + 24, call_y + call_h - 0.25 * inch, "Key Innovation: Epistemic Uncertainty Guides Symbolic Discovery")
         c.setFont(FONT_REGULAR, 8.8)
         c.setFillColor(COLOR_TEXT)
@@ -337,7 +339,7 @@ def build_poster():
         c.drawString(col1_x + 24, call_y + call_h - 0.68 * inch, "sample weights w_i = 1 / (σ_i² + ε), focusing genetic discovery on high-confidence regimes")
         c.drawString(col1_x + 24, call_y + call_h - 0.88 * inch, "while safe ± 3σ bounds guarantee posterior stability on unseen conditions.")
 
-    # Card 2: HI Extraction Plot
+    # Card 2: HI Extraction Plot (Data Plot - Kept in Full Color)
     col1_card2_h = 13.5 * inch
     col1_card2_y = col1_card1_y - 0.3 * inch - col1_card2_h
     c2_top = draw_card_frame(col1_x, col1_card2_y, col_width, col1_card2_h,
@@ -351,7 +353,7 @@ def build_poster():
                     width=img_w, height=img_h, preserveAspectRatio=True)
 
     c.setFont(FONT_BOLD, 9.0)
-    c.setFillColor(COLOR_NAVY)
+    c.setFillColor(COLOR_BLACK)
     c.drawString(col1_x + 16, col1_card2_y + 1.25 * inch,
                  "Figure 1: (a) CC-CV profiles; (b) Joule heating dynamics; (c) t_CC monotonic fade; (d) dQ/dV peak shift.")
     
@@ -364,14 +366,14 @@ def build_poster():
     c.drawString(col1_x + 16, col1_card2_y + 0.58 * inch,
                  "- Peak surface temperature rise (ΔT_dis) directly quantifies internal resistance growth (I²R).")
 
-    # Card 3: LOCO Strategy Table
+    # Card 3: LOCO Strategy Table (Academic B&W Booktabs Styling)
     col1_card3_h = body_height - col1_card1_h - col1_card2_h - 0.6 * inch
     col1_card3_y = body_y
     c3_top = draw_card_frame(col1_x, col1_card3_y, col_width, col1_card3_h,
                              "3. Strict Leave-One-Cell-Out (LOCO) Splits", "Zero Leakage Protocol")
 
     c.setFont(FONT_BOLD, 9.5)
-    c.setFillColor(COLOR_NAVY)
+    c.setFillColor(COLOR_BLACK)
     c.drawString(col1_x + 16, c3_top - 0.28 * inch,
                  "Evaluated across 8 strict LOCO folds (NASA 18650 & CALCE Prismatic) over 3 seeds [42, 100, 2026]:")
 
@@ -385,13 +387,13 @@ def build_poster():
     ]
     t = Table(t_data, colWidths=[1.1*inch, 1.1*inch, 2.7*inch, 2.8*inch, 2.0*inch])
     t.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), COLOR_NAVY),
+        ('BACKGROUND', (0, 0), (-1, 0), COLOR_DARK_HEADER),
         ('TEXTCOLOR', (0, 0), (-1, 0), HexColor("#FFFFFF")),
         ('FONTNAME', (0, 0), (-1, -1), FONT_BOLD),
         ('FONTSIZE', (0, 0), (-1, -1), 8),
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
         ('GRID', (0, 0), (-1, -1), 0.5, COLOR_BORDER),
-        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [HexColor("#FFFFFF"), HexColor("#F8FAFC")]),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [HexColor("#FFFFFF"), COLOR_ROW_ALT]),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
         ('TOPPADDING', (0, 0), (-1, -1), 3),
     ]))
@@ -406,7 +408,7 @@ def build_poster():
     # -------------------------------------------------------------------------
     # COLUMN 2: ARCHITECTURE & MATHEMATICAL FOUNDATIONS
     # -------------------------------------------------------------------------
-    # Card 4: Architecture Flowchart
+    # Card 4: Architecture Flowchart (Newly Finalized draw.io Diagram in Full Color)
     col2_card4_h = 10.2 * inch
     col2_card4_y = body_y + body_height - col2_card4_h
     c4_top = draw_card_frame(col2_x, col2_card4_y, col_width, col2_card4_h,
@@ -414,13 +416,17 @@ def build_poster():
 
     arch_img = POSTER_ASSETS / "architecture_flowchart.png"
     if arch_img.exists():
-        img_w = col_width - 24
-        img_h = 8.2 * inch
-        c.drawImage(str(arch_img), col2_x + 12, col2_card4_y + 1.2 * inch,
-                    width=img_w, height=img_h, preserveAspectRatio=True)
+        avail_w = col_width - 24
+        avail_h = 8.2 * inch
+        target_h = min(avail_h, avail_w / 1.6623)
+        target_w = target_h * 1.6623
+        img_x = col2_x + (col_width - target_w) / 2
+        img_y = col2_card4_y + 1.2 * inch + (avail_h - target_h) / 2
+        c.drawImage(str(arch_img), img_x, img_y,
+                    width=target_w, height=target_h, preserveAspectRatio=True)
 
     c.setFont(FONT_BOLD, 9.0)
-    c.setFillColor(COLOR_NAVY)
+    c.setFillColor(COLOR_BLACK)
     c.drawString(col2_x + 16, col2_card4_y + 0.85 * inch,
                  "Figure 2: End-to-end architectural routing: 10 HIs feed Wide Linear & Deep MLP branches, mapped to")
     c.drawString(col2_x + 16, col2_card4_y + 0.65 * inch,
@@ -442,7 +448,7 @@ def build_poster():
     if eq1_img.exists():
         c.drawImage(str(eq1_img), col2_x + 14, eq1_y + 0.95 * inch, width=col_width - 28, height=1.35 * inch, preserveAspectRatio=True)
     c.setFont(FONT_BOLD, 9.5)
-    c.setFillColor(COLOR_NAVY)
+    c.setFillColor(COLOR_BLACK)
     c.drawString(col2_x + 24, eq1_y + 0.70 * inch, "Composite Wide-and-Deep Covariance Kernel Properties:")
     c.setFont(FONT_REGULAR, 8.5)
     c.setFillColor(COLOR_TEXT)
@@ -455,7 +461,7 @@ def build_poster():
     if eq2_img.exists():
         c.drawImage(str(eq2_img), col2_x + 14, eq2_y + 1.05 * inch, width=col_width - 28, height=1.25 * inch, preserveAspectRatio=True)
     c.setFont(FONT_BOLD, 9.5)
-    c.setFillColor(COLOR_NAVY)
+    c.setFillColor(COLOR_BLACK)
     c.drawString(col2_x + 24, eq2_y + 0.78 * inch, "Sparse Variational GP Objective (M = 64 Inducing Points):")
     c.setFont(FONT_REGULAR, 8.5)
     c.setFillColor(COLOR_TEXT)
@@ -468,7 +474,7 @@ def build_poster():
     if eq3_img.exists():
         c.drawImage(str(eq3_img), col2_x + 14, eq3_y + 1.10 * inch, width=col_width - 28, height=1.35 * inch, preserveAspectRatio=True)
     c.setFont(FONT_BOLD, 9.5)
-    c.setFillColor(COLOR_NAVY)
+    c.setFillColor(COLOR_BLACK)
     c.drawString(col2_x + 24, eq3_y + 0.82 * inch, "Uncertainty-Weighted Symbolic Regression Loss:")
     c.setFont(FONT_REGULAR, 8.5)
     c.setFillColor(COLOR_TEXT)
@@ -481,7 +487,7 @@ def build_poster():
     if eq4_img.exists():
         c.drawImage(str(eq4_img), col2_x + 14, eq4_y + 0.95 * inch, width=col_width - 28, height=1.25 * inch, preserveAspectRatio=True)
     c.setFont(FONT_BOLD, 9.5)
-    c.setFillColor(HexColor("#92400E"))
+    c.setFillColor(COLOR_BLACK)
     c.drawString(col2_x + 24, eq4_y + 0.68 * inch, "Guaranteed Bounded Posterior Prediction & Calibrated 95% Confidence:")
     c.setFont(FONT_REGULAR, 8.5)
     c.setFillColor(COLOR_TEXT)
@@ -500,13 +506,13 @@ def build_poster():
     algo_box_x = col2_x + 12
     algo_box_y = c6_top - algo_box_h - 0.15 * inch
 
-    c.setFillColor(HexColor("#F8FAFC"))
+    c.setFillColor(HexColor("#F9FAFB"))
     c.setStrokeColor(COLOR_BORDER)
     c.setLineWidth(1.0)
     c.roundRect(algo_box_x, algo_box_y, algo_box_w, algo_box_h, 6, fill=True, stroke=True)
 
     # Algo Header Bar
-    c.setFillColor(COLOR_NAVY_LIGHT)
+    c.setFillColor(COLOR_BORDER_DARK)
     c.roundRect(algo_box_x, algo_box_y + algo_box_h - 0.32 * inch, algo_box_w, 0.32 * inch, 6, fill=True, stroke=False)
     c.rect(algo_box_x, algo_box_y + algo_box_h - 0.32 * inch, algo_box_w, 8, fill=True, stroke=False)
     c.setFont(FONT_BOLD, 9.5)
@@ -516,7 +522,7 @@ def build_poster():
 
     ay = algo_box_y + algo_box_h - 0.48 * inch
     c.setFont(FONT_BOLD, 8.2)
-    c.setFillColor(COLOR_NAVY)
+    c.setFillColor(COLOR_BLACK)
     c.drawString(algo_box_x + 10, ay, "Require: ")
     c.setFont(FONT_REGULAR, 8.0)
     c.setFillColor(COLOR_TEXT)
@@ -524,7 +530,7 @@ def build_poster():
     
     ay -= 0.18 * inch
     c.setFont(FONT_BOLD, 8.2)
-    c.setFillColor(COLOR_NAVY)
+    c.setFillColor(COLOR_BLACK)
     c.drawString(algo_box_x + 10, ay, "Ensure: ")
     c.setFont(FONT_REGULAR, 8.0)
     c.setFillColor(COLOR_TEXT)
@@ -547,7 +553,7 @@ def build_poster():
     # Discovered Equation Box Below Algorithm 1
     eq_label_y = algo_box_y - 0.25 * inch
     c.setFont(FONT_BOLD, 9.2)
-    c.setFillColor(COLOR_NAVY)
+    c.setFillColor(COLOR_BLACK)
     c.drawString(col2_x + 16, eq_label_y, "Representative Discovered Analytical Residual Equation (NASA B0018 Fold):")
 
     eq5_img = POSTER_ASSETS / "poster_eq_discovered_residual.png"
@@ -587,18 +593,18 @@ def build_poster():
 
     t_res = Table(res_data, colWidths=[1.1*inch, 2.7*inch, 1.25*inch, 1.25*inch, 1.1*inch, 1.25*inch, 1.2*inch, 1.0*inch])
     t_res.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), COLOR_NAVY),
+        ('BACKGROUND', (0, 0), (-1, 0), COLOR_DARK_HEADER),
         ('TEXTCOLOR', (0, 0), (-1, 0), HexColor("#FFFFFF")),
         ('FONTNAME', (0, 0), (-1, -1), FONT_BOLD),
         ('FONTSIZE', (0, 0), (-1, -1), 7.6),
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
         ('ALIGN', (1, 1), (1, -1), 'LEFT'),
         ('GRID', (0, 0), (-1, -1), 0.5, COLOR_BORDER),
-        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [HexColor("#FFFFFF"), HexColor("#F8FAFC")]),
-        ('BACKGROUND', (0, 6), (-1, 6), COLOR_GOLD_BG),
-        ('TEXTCOLOR', (0, 6), (-1, 6), HexColor("#92400E")),
-        ('BACKGROUND', (0, 11), (-1, 11), COLOR_GOLD_BG),
-        ('TEXTCOLOR', (0, 11), (-1, 11), HexColor("#92400E")),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [HexColor("#FFFFFF"), COLOR_ROW_ALT]),
+        ('BACKGROUND', (0, 6), (-1, 6), COLOR_HIGHLIGHT_BG),
+        ('TEXTCOLOR', (0, 6), (-1, 6), COLOR_HIGHLIGHT_TEXT),
+        ('BACKGROUND', (0, 11), (-1, 11), COLOR_HIGHLIGHT_BG),
+        ('TEXTCOLOR', (0, 11), (-1, 11), COLOR_HIGHLIGHT_TEXT),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 2.0),
         ('TOPPADDING', (0, 0), (-1, -1), 2.0),
     ]))
@@ -606,13 +612,13 @@ def build_poster():
     t_res.drawOn(c, col3_x + 14, c7_top - 4.15 * inch)
 
     c.setFont(FONT_BOLD, 8.2)
-    c.setFillColor(COLOR_SUCCESS)
+    c.setFillColor(COLOR_BLACK)
     c.drawString(col3_x + 16, col3_card7_y + 0.32 * inch,
                  "Key Result: WD-GPR-SR slashes NASA RMSE by 24% vs best baseline (XGBoost 1.300% -> 0.992%)")
     c.drawString(col3_x + 16, col3_card7_y + 0.16 * inch,
                  "and achieves 98.8% to 100.0% PICP coverage, proving rigorous uncertainty calibration.")
 
-    # Card 8: SOH Trajectory & Epistemic Uncertainty
+    # Card 8: SOH Trajectory & Epistemic Uncertainty (Data Plot - Kept in Full Color)
     col3_card8_h = 6.4 * inch
     col3_card8_y = col3_card7_y - 0.22 * inch - col3_card8_h
     c8_top = draw_card_frame(col3_x, col3_card8_y, col_width, col3_card8_h,
@@ -626,7 +632,7 @@ def build_poster():
                     width=img_w, height=img_h, preserveAspectRatio=True)
 
     c.setFont(FONT_BOLD, 8.5)
-    c.setFillColor(COLOR_NAVY)
+    c.setFillColor(COLOR_BLACK)
     c.drawString(col3_x + 16, col3_card8_y + 0.58 * inch,
                  "Figure 3: True vs predicted SOH with ± 1.96σ confidence band. Dynamic widening during regeneration jumps.")
     c.setFont(FONT_REGULAR, 8.0)
@@ -634,7 +640,7 @@ def build_poster():
     c.drawString(col3_x + 16, col3_card8_y + 0.38 * inch,
                  "The model accurately tracks post-rest capacity jumps without overfitting, remaining strictly bounded.")
 
-    # Card 9: Multi-Perspective XAI
+    # Card 9: Multi-Perspective XAI (Data Plot - Kept in Full Color)
     col3_card9_h = 6.2 * inch
     col3_card9_y = col3_card8_y - 0.22 * inch - col3_card9_h
     c9_top = draw_card_frame(col3_x, col3_card9_y, col_width, col3_card9_h,
@@ -648,7 +654,7 @@ def build_poster():
                     width=img_w, height=img_h, preserveAspectRatio=True)
 
     c.setFont(FONT_BOLD, 8.5)
-    c.setFillColor(COLOR_NAVY)
+    c.setFillColor(COLOR_BLACK)
     c.drawString(col3_x + 16, col3_card9_y + 0.58 * inch,
                  "Figure 4: (a) SHAP beeswarm verifies t_CC and Q_peak as dominant drivers; (b) ARD linear relevance breakdown.")
     c.setFont(FONT_REGULAR, 8.0)
@@ -656,11 +662,11 @@ def build_poster():
     c.drawString(col3_x + 16, col3_card9_y + 0.38 * inch,
                  "Domain Physics Confirmed: High t_CC and Q_peak increase SOH; high ΔT_dis indicates accelerated thermal aging.")
 
-    # Card 10: Edge AI Deployment Metrics
+    # Card 10: Edge AI Deployment Metrics (Data Plot - Kept in Full Color)
     col3_card10_h = 5.8 * inch
     col3_card10_y = col3_card9_y - 0.22 * inch - col3_card10_h
     c10_top = draw_card_frame(col3_x, col3_card10_y, col_width, col3_card10_h,
-                              "10. Edge AI Benchmarking on NVIDIA Jetson Orin Nano", "12,900x Speedup | 8,880x Energy Cut")
+                              "10. Edge AI Benchmarking (Host-Target Profiling)", "NVIDIA Jetson Orin Nano Harness | 12,900x Speedup")
 
     jet_img = POSTER_ASSETS / "edge_deployment_metrics.png"
     if jet_img.exists():
@@ -670,13 +676,13 @@ def build_poster():
                     width=img_w, height=img_h, preserveAspectRatio=True)
 
     c.setFont(FONT_BOLD, 8.2)
-    c.setFillColor(COLOR_NAVY)
+    c.setFillColor(COLOR_BLACK)
     c.drawString(col3_x + 16, col3_card10_y + 0.48 * inch,
-                 "Figure 5: Hardware profiling: 0.110 ms latency (left), component breakdown (center), and footprint (right).")
+                 "Figure 5: Host-target hardware profiling: 0.110 ms latency (left), module breakdown (center), footprint (right).")
     c.setFont(FONT_REGULAR, 7.8)
     c.setFillColor(COLOR_TEXT)
     c.drawString(col3_x + 16, col3_card10_y + 0.28 * inch,
-                 "Inference latency is 909x faster than the 100 ms ISO 26262 ASIL-D safety deadline; consumes only 1.48 mJ.")
+                 "Profiled via Jetson Orin Nano harness (15W MAXN): 909x faster than 100 ms ASIL-D deadline; consumes 1.48 mJ.")
 
     # Card 11: Conclusion & References
     col3_card11_h = body_height - col3_card7_h - col3_card8_h - col3_card9_h - col3_card10_h - 0.88 * inch
@@ -685,19 +691,19 @@ def build_poster():
                               "11. Conclusion & Key References", "Summary & Citations")
 
     c.setFont(FONT_BOLD, 9.0)
-    c.setFillColor(COLOR_NAVY)
+    c.setFillColor(COLOR_BLACK)
     c.drawString(col3_x + 16, c11_top - 0.26 * inch, "Key Takeaways:")
     c.setFont(FONT_REGULAR, 8.2)
     c.setFillColor(COLOR_TEXT)
     c.drawString(col3_x + 22, c11_top - 0.46 * inch, "1. WD-GPR-SR establishes new SOTA accuracy: 0.992% RMSE (NASA) and 0.130% (CALCE).")
     c.drawString(col3_x + 22, c11_top - 0.64 * inch, "2. First architecture to resolve the accuracy-interpretability-uncertainty trilemma with 98.8% PICP.")
-    c.drawString(col3_x + 22, c11_top - 0.82 * inch, "3. Microsecond edge execution (0.110 ms) on Jetson Orin Nano enables production embedded BMS deployment.")
+    c.drawString(col3_x + 22, c11_top - 0.82 * inch, "3. Microsecond edge execution (0.110 ms) profiled via Jetson Orin Nano harness enables embedded BMS deployment.")
 
     c.setFont(FONT_BOLD, 9.0)
-    c.setFillColor(COLOR_NAVY)
+    c.setFillColor(COLOR_BLACK)
     c.drawString(col3_x + 16, c11_top - 1.10 * inch, "Key References:")
     c.setFont(FONT_REGULAR, 7.5)
-    c.setFillColor(COLOR_TEXT)
+    c.setFillColor(COLOR_MUTED)
     refs = [
         "[1] B. Saha and K. Goebel, 'Battery Data Set,' NASA Ames Prognostics Center of Excellence (PCoE), 2007.",
         "[2] CALCE Battery Research Group, 'Battery Data Archive,' University of Maryland, College Park, MD, 2015.",
@@ -724,14 +730,23 @@ def build_poster():
         except Exception as e:
             print(f"[NOTE] Could not mirror to {MIRROR_PDF.name}: {e}")
     elif target_path != DELIVERABLE_PDF:
+        copied = False
         try:
             shutil.copyfile(target_path, DELIVERABLE_PDF)
             print(f"[SUCCESS] Copied to deliverable path: {DELIVERABLE_PDF.name}!")
-            shutil.copyfile(target_path, MIRROR_PDF)
-            print(f"[SUCCESS] Mirrored to root file: {MIRROR_PDF.name}!")
-            target_path.unlink()
+            copied = True
         except Exception as e:
             print(f"[NOTE] Target file copy note: {e}")
+        try:
+            shutil.copyfile(target_path, MIRROR_PDF)
+            print(f"[SUCCESS] Mirrored to root file: {MIRROR_PDF.name}!")
+        except Exception as e:
+            print(f"[NOTE] Root file copy note: {e}")
+        if copied:
+            try:
+                target_path.unlink()
+            except Exception:
+                pass
 
 
 if __name__ == "__main__":
